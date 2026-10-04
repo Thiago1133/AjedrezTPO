@@ -10,8 +10,10 @@ import ar.edu.uade.chess.core.port.ChessGame;
 import ar.edu.uade.chess.core.port.GameObserver;
 import ar.edu.uade.chess.core.port.MoveInput;
 
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 /**
  * Text adapter. Translates console input into calls on the ChessGame port and
@@ -31,14 +33,17 @@ public class ConsoleUI implements MoveInput, GameObserver {
 
     private final Scanner scanner;
     private final Map<String, Runnable> commands;
+    /** Colors this console has been asked to play for; the others are the computer. */
+    private final Set<Color> humanColors = EnumSet.noneOf(Color.class);
     private ChessGame game;
     private boolean quitRequested;
+    private boolean turnInterrupted;
 
     public ConsoleUI(Scanner scanner) {
         this.scanner = scanner;
         Runnable quit = () -> quitRequested = true;
-        Runnable undo = () -> game.undo();
-        Runnable redo = () -> game.redo();
+        Runnable undo = () -> stepUntilHumanTurn(game::undo);
+        Runnable redo = () -> stepUntilHumanTurn(game::redo);
         Runnable help = this::showHelp;
         this.commands = Map.of(
                 "salir", quit, "quit", quit,
@@ -55,7 +60,8 @@ public class ConsoleUI implements MoveInput, GameObserver {
             showHelp();
             game.start();
             while (!quitRequested && !game.getStatus().isGameOver()) {
-                if (!game.playTurn() && !quitRequested) {
+                turnInterrupted = false;
+                if (!game.playTurn() && !quitRequested && !turnInterrupted) {
                     showMessage("Movimiento inválido. Probá de nuevo.");
                 }
             }
@@ -66,6 +72,7 @@ public class ConsoleUI implements MoveInput, GameObserver {
 
     @Override
     public Move readMove(Color color) {
+        humanColors.add(color);
         while (true) {
             System.out.print(COLOR_NAMES.get(game.getCurrentTurn()) + " > ");
             if (!scanner.hasNextLine()) {
@@ -77,6 +84,11 @@ public class ConsoleUI implements MoveInput, GameObserver {
             if (command != null) {
                 command.run();
                 if (quitRequested) {
+                    return null;
+                }
+                if (game.getCurrentTurn() != color) {
+                    // Undo/redo handed the turn to the other player: let the game ask them.
+                    turnInterrupted = true;
                     return null;
                 }
             } else if (!line.isEmpty()) {
@@ -161,6 +173,20 @@ public class ConsoleUI implements MoveInput, GameObserver {
 
     private String format(Position position) {
         return "" + (char) ('a' + position.getColumn()) + (position.getRow() + 1);
+    }
+
+    /**
+     * Undoes (or redoes) one move, and keeps going while it is the computer's turn,
+     * so that against the AI one "deshacer" takes back both the AI's move and ours.
+     */
+    private void stepUntilHumanTurn(Runnable step) {
+        do {
+            Color before = game.getCurrentTurn();
+            step.run();
+            if (game.getCurrentTurn() == before) {
+                return; // nothing left to undo/redo
+            }
+        } while (!humanColors.contains(game.getCurrentTurn()));
     }
 
     private void showHelp() {

@@ -5,6 +5,8 @@ import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.game.GameStatus;
 
+import java.util.List;
+
 /**
  * Driving port: everything an adapter (console, GUI, web...) may ask the core.
  * Adapters depend on this interface, never on the concrete Game.
@@ -26,6 +28,9 @@ public interface ChessGame {
     Board getBoard();
 
     Color getCurrentTurn();
+
+    /** Every legal move for the player to move (empty if the game is over). */
+    List<Move> getLegalMoves();
 
     GameStatus getStatus();
 
