@@ -280,6 +280,29 @@ class GameTest {
     }
 
     @Test
+    void getLegalMoves_listsMovesOfThePlayerToMove() {
+        Game game = newGame(standardBoard());
+
+        assertEquals(20, game.getLegalMoves().size());
+        game.move(move("e2", "e4"));
+        assertTrue(game.getLegalMoves().stream()
+                .allMatch(m -> game.getBoard().getPiece(m.getFrom()).getColor() == Color.BLACK));
+    }
+
+    @Test
+    void getLegalMoves_isEmptyWhenTheGameIsOver() {
+        CheckDetector checkDetector = new CheckDetector();
+        MoveValidator validator = new MoveValidator(checkDetector, new MoveCommandFactory(List.of()));
+        Game game = newGame(standardBoard(), List.of(new CheckmateCondition(validator, checkDetector)), List.of());
+        game.move(move("f2", "f3"));
+        game.move(move("e7", "e5"));
+        game.move(move("g2", "g4"));
+        game.move(move("d8", "h4"));
+
+        assertTrue(game.getLegalMoves().isEmpty());
+    }
+
+    @Test
     void turnManager_requiresWhiteThenBlack() {
         PlayerStrategy noMoves = (game, color) -> null;
         assertThrows(IllegalArgumentException.class, () -> new TurnManager(

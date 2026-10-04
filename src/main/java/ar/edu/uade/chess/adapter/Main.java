@@ -4,9 +4,12 @@ import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.command.MoveCommandFactory;
 import ar.edu.uade.chess.core.command.MoveHistory;
+import ar.edu.uade.chess.core.game.AIPlayerStrategy;
 import ar.edu.uade.chess.core.game.Game;
 import ar.edu.uade.chess.core.game.HumanPlayerStrategy;
+import ar.edu.uade.chess.core.game.MaterialEvaluationStrategy;
 import ar.edu.uade.chess.core.game.Player;
+import ar.edu.uade.chess.core.game.PlayerStrategy;
 import ar.edu.uade.chess.core.game.TurnManager;
 import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
@@ -28,6 +31,7 @@ import ar.edu.uade.chess.core.status.StalemateCondition;
 import ar.edu.uade.chess.core.status.ThreefoldRepetitionCondition;
 
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 /**
@@ -56,12 +60,23 @@ public class Main {
                 new ThreefoldRepetitionCondition(),
                 new FiftyMoveRuleCondition()));
 
-        ConsoleUI console = new ConsoleUI(new Scanner(System.in));
+        Scanner scanner = new Scanner(System.in);
+        ConsoleUI console = new ConsoleUI(scanner);
+        PlayerStrategy blackStrategy = askVersusComputer(scanner)
+                ? new AIPlayerStrategy(new MaterialEvaluationStrategy(checkDetector), new Random())
+                : new HumanPlayerStrategy(console);
         TurnManager turnManager = new TurnManager(
                 new Player(Color.WHITE, new HumanPlayerStrategy(console)),
-                new Player(Color.BLACK, new HumanPlayerStrategy(console)));
+                new Player(Color.BLACK, blackStrategy));
 
         Game game = new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory());
         console.run(game);
+    }
+
+    /** Game mode: the computer plays black when the user picks option 2. */
+    private static boolean askVersusComputer(Scanner scanner) {
+        System.out.println("Modo de juego:\n  1) Dos jugadores\n  2) Contra la computadora (jugás con blancas)");
+        System.out.print("Elegí 1 o 2 > ");
+        return scanner.hasNextLine() && scanner.nextLine().trim().equals("2");
     }
 }

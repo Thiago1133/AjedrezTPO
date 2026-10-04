@@ -16,7 +16,8 @@ mvn package     # compila, corre los tests y genera el jar
 java -jar target/ajedrez-tpo-1.0-SNAPSHOT.jar   # juega en consola
 ```
 
-En la consola: `e2 e4` para mover, `deshacer`, `rehacer`, `ayuda`, `salir`.
+Al iniciar se elige el modo: dos jugadores o contra la computadora (la IA juega con negras).
+En la consola: `e2 e4` para mover, `e7 e8 n` para promover a caballo, `deshacer`, `rehacer`, `ayuda`, `salir`.
 
 ## Estructura
 
@@ -39,4 +40,4 @@ src/main/java/ar/edu/uade/chess/
 - [x] Módulo 3: partida, turnos, puertos y consola
 - [x] Módulo 4: fin de partida (mate, ahogado, tablas)
 - [x] Módulo 5: reglas especiales (enroque, al paso, promoción)
-- [ ] Módulo 6: oponente con IA
+- [x] Módulo 6: oponente con IA

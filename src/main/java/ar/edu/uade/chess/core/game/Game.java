@@ -105,6 +105,14 @@ public class Game implements ChessGame {
     }
 
     @Override
+    public List<Move> getLegalMoves() {
+        if (status.isGameOver()) {
+            return List.of();
+        }
+        return moveValidator.getLegalMoves(board, history, turnManager.getCurrentColor());
+    }
+
+    @Override
     public GameStatus getStatus() {
         return status;
     }
