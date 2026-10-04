@@ -18,7 +18,11 @@ import ar.edu.uade.chess.core.piece.RookDefinition;
 import ar.edu.uade.chess.core.piece.StandardChessSetup;
 import ar.edu.uade.chess.core.rules.CheckDetector;
 import ar.edu.uade.chess.core.rules.MoveValidator;
+import ar.edu.uade.chess.core.status.CheckmateCondition;
+import ar.edu.uade.chess.core.status.FiftyMoveRuleCondition;
 import ar.edu.uade.chess.core.status.GameStatusEvaluator;
+import ar.edu.uade.chess.core.status.StalemateCondition;
+import ar.edu.uade.chess.core.status.ThreefoldRepetitionCondition;
 
 import java.util.List;
 import java.util.Scanner;
@@ -40,7 +44,11 @@ public class Main {
         CheckDetector checkDetector = new CheckDetector();
         MoveCommandFactory commandFactory = new MoveCommandFactory(List.of());
         MoveValidator moveValidator = new MoveValidator(checkDetector, commandFactory);
-        GameStatusEvaluator statusEvaluator = new GameStatusEvaluator(checkDetector, List.of());
+        GameStatusEvaluator statusEvaluator = new GameStatusEvaluator(checkDetector, List.of(
+                new CheckmateCondition(moveValidator, checkDetector),
+                new StalemateCondition(moveValidator, checkDetector),
+                new ThreefoldRepetitionCondition(),
+                new FiftyMoveRuleCondition()));
 
         ConsoleUI console = new ConsoleUI(new Scanner(System.in));
         TurnManager turnManager = new TurnManager(

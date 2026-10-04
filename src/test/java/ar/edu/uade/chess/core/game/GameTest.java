@@ -16,6 +16,7 @@ import ar.edu.uade.chess.core.piece.RookDefinition;
 import ar.edu.uade.chess.core.piece.StandardChessSetup;
 import ar.edu.uade.chess.core.rules.CheckDetector;
 import ar.edu.uade.chess.core.rules.MoveValidator;
+import ar.edu.uade.chess.core.status.CheckmateCondition;
 import ar.edu.uade.chess.core.status.GameEndCondition;
 import ar.edu.uade.chess.core.status.GameStatusEvaluator;
 import org.junit.jupiter.api.Test;
@@ -244,6 +245,38 @@ class GameTest {
         assertTrue(spy.events.contains("over DRAW"));
         assertFalse(game.move(move("e2", "e4")));
         assertFalse(game.playTurn());
+    }
+
+    @Test
+    void foolsMate_endsTheGameWithCheckmate() {
+        CheckDetector checkDetector = new CheckDetector();
+        MoveValidator validator = new MoveValidator(checkDetector, new MoveCommandFactory(List.of()));
+        Game game = newGame(standardBoard(), List.of(new CheckmateCondition(validator, checkDetector)), List.of());
+
+        game.move(move("f2", "f3"));
+        game.move(move("e7", "e5"));
+        game.move(move("g2", "g4"));
+        game.move(move("d8", "h4"));
+
+        assertEquals(GameStatus.CHECKMATE, game.getStatus());
+        assertTrue(spy.events.contains("over CHECKMATE"));
+        assertFalse(game.move(move("a2", "a3")), "no moves after the game is over");
+    }
+
+    @Test
+    void undoAfterCheckmate_resumesTheGame() {
+        CheckDetector checkDetector = new CheckDetector();
+        MoveValidator validator = new MoveValidator(checkDetector, new MoveCommandFactory(List.of()));
+        Game game = newGame(standardBoard(), List.of(new CheckmateCondition(validator, checkDetector)), List.of());
+        game.move(move("f2", "f3"));
+        game.move(move("e7", "e5"));
+        game.move(move("g2", "g4"));
+        game.move(move("d8", "h4"));
+
+        game.undo();
+
+        assertEquals(GameStatus.IN_PROGRESS, game.getStatus());
+        assertEquals(Color.BLACK, game.getCurrentTurn());
     }
 
     @Test
