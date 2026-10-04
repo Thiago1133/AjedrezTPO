@@ -38,5 +38,5 @@ src/main/java/ar/edu/uade/chess/
 - [x] Módulo 2: validación, jaque, comandos (deshacer/rehacer)
 - [x] Módulo 3: partida, turnos, puertos y consola
 - [x] Módulo 4: fin de partida (mate, ahogado, tablas)
-- [ ] Módulo 5: reglas especiales (enroque, al paso, promoción)
+- [x] Módulo 5: reglas especiales (enroque, al paso, promoción)
 - [ ] Módulo 6: oponente con IA

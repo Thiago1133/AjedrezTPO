@@ -16,8 +16,11 @@ import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
 import ar.edu.uade.chess.core.piece.StandardChessSetup;
+import ar.edu.uade.chess.core.rules.CastlingRule;
 import ar.edu.uade.chess.core.rules.CheckDetector;
+import ar.edu.uade.chess.core.rules.EnPassantRule;
 import ar.edu.uade.chess.core.rules.MoveValidator;
+import ar.edu.uade.chess.core.rules.PromotionRule;
 import ar.edu.uade.chess.core.status.CheckmateCondition;
 import ar.edu.uade.chess.core.status.FiftyMoveRuleCondition;
 import ar.edu.uade.chess.core.status.GameStatusEvaluator;
@@ -42,7 +45,10 @@ public class Main {
         new StandardChessSetup(pieceFactory).setup(board);
 
         CheckDetector checkDetector = new CheckDetector();
-        MoveCommandFactory commandFactory = new MoveCommandFactory(List.of());
+        MoveCommandFactory commandFactory = new MoveCommandFactory(List.of(
+                new CastlingRule(checkDetector),
+                new EnPassantRule(),
+                new PromotionRule(pieceFactory)));
         MoveValidator moveValidator = new MoveValidator(checkDetector, commandFactory);
         GameStatusEvaluator statusEvaluator = new GameStatusEvaluator(checkDetector, List.of(
                 new CheckmateCondition(moveValidator, checkDetector),
