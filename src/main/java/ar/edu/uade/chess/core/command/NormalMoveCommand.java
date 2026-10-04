@@ -3,12 +3,14 @@ package ar.edu.uade.chess.core.command;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.piece.PieceTrait;
 
 /** A regular move or capture: one piece goes from origin to destination. */
 public class NormalMoveCommand implements MoveCommand {
     private final Move move;
     private Piece capturedPiece;
     private boolean wasMoved;
+    private boolean irreversible;
 
     public NormalMoveCommand(Move move) {
         this.move = move;
@@ -24,6 +26,8 @@ public class NormalMoveCommand implements MoveCommand {
         capturedPiece = board.removePiece(move.getTo());
         board.movePiece(move.getFrom(), move.getTo());
         piece.setMoved(true);
+        // Pieces that promote only move forward, so their moves can never be reversed.
+        irreversible = capturedPiece != null || piece.hasTrait(PieceTrait.PROMOTES);
     }
 
     @Override
@@ -38,5 +42,10 @@ public class NormalMoveCommand implements MoveCommand {
     @Override
     public Move getMove() {
         return move;
+    }
+
+    @Override
+    public boolean isIrreversible() {
+        return irreversible;
     }
 }

@@ -37,6 +37,6 @@ src/main/java/ar/edu/uade/chess/
 - [x] Módulo 1: tablero y piezas (movimiento propio de las 6 piezas)
 - [x] Módulo 2: validación, jaque, comandos (deshacer/rehacer)
 - [x] Módulo 3: partida, turnos, puertos y consola
-- [ ] Módulo 4: fin de partida (mate, ahogado, tablas)
+- [x] Módulo 4: fin de partida (mate, ahogado, tablas)
 - [ ] Módulo 5: reglas especiales (enroque, al paso, promoción)
 - [ ] Módulo 6: oponente con IA

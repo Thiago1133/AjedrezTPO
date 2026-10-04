@@ -90,6 +90,24 @@ class MoveCommandTest {
     }
 
     @Test
+    void isIrreversible_onlyForCapturesAndPawnMoves() {
+        board.placePiece(new RookDefinition().create(Color.WHITE), at(0, 0));
+        board.placePiece(new PawnDefinition().create(Color.WHITE), at(1, 7));
+        board.placePiece(new KnightDefinition().create(Color.BLACK), at(5, 0));
+
+        MoveCommand rookMove = new NormalMoveCommand(new Move(at(0, 0), at(3, 0)));
+        rookMove.execute(board);
+        MoveCommand pawnMove = new NormalMoveCommand(new Move(at(1, 7), at(2, 7)));
+        pawnMove.execute(board);
+        MoveCommand capture = new NormalMoveCommand(new Move(at(3, 0), at(5, 0)));
+        capture.execute(board);
+
+        assertFalse(rookMove.isIrreversible());
+        assertTrue(pawnMove.isIrreversible());
+        assertTrue(capture.isIrreversible());
+    }
+
+    @Test
     void execute_withoutPiece_throws() {
         MoveCommand command = new NormalMoveCommand(new Move(at(0, 0), at(1, 0)));
         assertThrows(IllegalStateException.class, () -> command.execute(board));
