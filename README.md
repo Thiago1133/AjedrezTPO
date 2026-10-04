@@ -21,12 +21,14 @@ mvn package     # compila y genera el jar
 src/main/java/ar/edu/uade/chess/
   core/board     Tablero, posiciones, movimientos, colores
   core/piece     Piezas por composición: reglas de movimiento, rasgos, definiciones, fábrica, setup
+  core/command   Movimientos como comandos (ejecutar/deshacer), historial y fábrica de comandos
+  core/rules     Detección de jaque, validación de movimientos y reglas especiales
 ```
 
 ## Avance
 
 - [x] Módulo 1: tablero y piezas (movimiento propio de las 6 piezas)
-- [ ] Módulo 2: validación, jaque, comandos (deshacer/rehacer)
+- [x] Módulo 2: validación, jaque, comandos (deshacer/rehacer)
 - [ ] Módulo 3: partida, turnos, puertos y consola
 - [ ] Módulo 4: fin de partida (mate, ahogado, tablas)
 - [ ] Módulo 5: reglas especiales (enroque, al paso, promoción)
