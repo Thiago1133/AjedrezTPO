@@ -7,15 +7,22 @@ public final class Move {
     private final Position from;
     private final Position to;
     private final String promotionId;
+    private final boolean enPassant;
 
     public Move(Position from, Position to) {
-        this(from, to, null);
+        this(from, to, null, false);
     }
 
     public Move(Position from, Position to, String promotionId) {
+        this(from, to, promotionId, false);
+    }
+
+    /** Used by legal-move generation to expose en-passant type to adapters. */
+    public Move(Position from, Position to, String promotionId, boolean enPassant) {
         this.from = Objects.requireNonNull(from, "from");
         this.to = Objects.requireNonNull(to, "to");
         this.promotionId = promotionId;
+        this.enPassant = enPassant;
     }
 
     public Position getFrom() {
@@ -29,6 +36,10 @@ public final class Move {
     /** Piece id chosen for promotion, or null when none was requested. */
     public String getPromotionId() {
         return promotionId;
+    }
+
+    public boolean isEnPassant() {
+        return enPassant;
     }
 
     @Override
