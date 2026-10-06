@@ -2,10 +2,12 @@ package ar.edu.uade.chess.adapter.gui;
 
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
+import ar.edu.uade.chess.core.board.Direction;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.ChessGame;
 import ar.edu.uade.chess.core.port.GameObserver;
 
@@ -183,8 +185,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private boolean isPromotionMove(Piece piece, Position to) {
-        if (piece == null || !piece.getId().equals("pawn")) return false;
-        return to.getRow() == (piece.getColor() == Color.WHITE ? 7 : 0);
+        if (piece == null || !piece.hasTrait(PieceTrait.PROMOTES)) return false;
+        return !game.getBoard().isInside(to.offset(new Direction(piece.getColor().forward(), 0)));
     }
 
     private String promotionChoice() {
@@ -314,8 +316,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void updateCapturedPieces() {
-        Comparator<Piece> order = Comparator.comparingInt((Piece piece) -> pieceValue(piece)).reversed()
-                .thenComparing(Piece::getId);
+        Comparator<Piece> order = Comparator.<Piece>comparingInt(Piece::getValue).reversed()
+                .thenComparing(Piece::getSymbol);
         whiteCaptures.sort(order);
         blackCaptures.sort(order);
         capturedByWhite.setText(capturedSymbols(whiteCaptures));
@@ -332,36 +334,13 @@ public final class ChessWindow extends JFrame implements GameObserver {
         StringBuilder result = new StringBuilder("<html>");
         for (int i = 0; i < captures.size(); i++) {
             if (i > 0) result.append(i % 7 == 0 ? "<br>" : " ");
-            result.append(pieceSymbol(captures.get(i)));
+            result.append(PieceGlyphs.of(captures.get(i)));
         }
         return result.append("</html>").toString();
     }
 
-    private String pieceSymbol(Piece piece) {
-        boolean white = piece.getColor() == Color.WHITE;
-        return switch (piece.getId()) {
-            case "king" -> white ? "♔" : "♚";
-            case "queen" -> white ? "♕" : "♛";
-            case "rook" -> white ? "♖" : "♜";
-            case "bishop" -> white ? "♗" : "♝";
-            case "knight" -> white ? "♘" : "♞";
-            case "pawn" -> white ? "♙" : "♟";
-            default -> "";
-        };
-    }
-
     private int capturedValue(List<Piece> captures) {
-        return captures.stream().mapToInt(this::pieceValue).sum();
-    }
-
-    private int pieceValue(Piece piece) {
-        return switch (piece.getId()) {
-            case "pawn" -> 1;
-            case "knight", "bishop" -> 3;
-            case "rook" -> 5;
-            case "queen" -> 9;
-            default -> 0;
-        };
+        return captures.stream().mapToInt(Piece::getValue).sum();
     }
 
     private String colorName(Color color) { return color == Color.WHITE ? "Blancas" : "Negras"; }
