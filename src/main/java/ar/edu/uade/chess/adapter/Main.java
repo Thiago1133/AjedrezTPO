@@ -29,31 +29,32 @@ import ar.edu.uade.chess.core.rules.PromotionRule;
 import ar.edu.uade.chess.core.status.CheckmateCondition;
 import ar.edu.uade.chess.core.status.FiftyMoveRuleCondition;
 import ar.edu.uade.chess.core.status.GameStatusEvaluator;
+import ar.edu.uade.chess.core.status.InsufficientMaterialCondition;
 import ar.edu.uade.chess.core.status.StalemateCondition;
 import ar.edu.uade.chess.core.status.ThreefoldRepetitionCondition;
 
 import javax.swing.SwingUtilities;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-/**
- * Composition root: the only place where concrete classes are instantiated and
- * wired together (dependency injection by hand). Extending the game means
- * changing the wiring here, not the core classes.
- */
+/** Composition root for the console and Swing adapters. */
 public class Main {
     private static final String CONSOLE_FLAG = "--consola";
     private static final String VERSUS_COMPUTER_OPTION = "2";
 
     public static void main(String[] args) {
-        if (args.length > 0 && args[0].equals(CONSOLE_FLAG)) {
+        if (Arrays.asList(args).contains(CONSOLE_FLAG)) {
             runConsole();
-        } else {
-            // The window moves through Game.move directly, so its human players never read input.
-            SwingUtilities.invokeLater(() ->
-                    new ChessWindow(versusComputer -> createGame(versusComputer, color -> null)).setVisible(true));
+            return;
         }
+
+        SwingUtilities.invokeLater(() -> {
+            ChessWindow window = new ChessWindow(
+                    versusComputer -> createGame(versusComputer, color -> null));
+            if (window.hasGame()) window.setVisible(true);
+        });
     }
 
     private static void runConsole() {
@@ -62,7 +63,7 @@ public class Main {
         console.run(createGame(askVersusComputer(scanner), console));
     }
 
-    /** Builds a ready-to-play game; the computer plays black when versusComputer is true. */
+    /** Builds a game with human input supplied by the selected adapter. */
     private static Game createGame(boolean versusComputer, MoveInput humanInput) {
         PieceFactory pieceFactory = new PieceFactory(List.of(
                 new PawnDefinition(), new RookDefinition(), new KnightDefinition(),
@@ -79,6 +80,7 @@ public class Main {
         GameStatusEvaluator statusEvaluator = new GameStatusEvaluator(checkDetector, List.of(
                 new CheckmateCondition(moveValidator, checkDetector),
                 new StalemateCondition(moveValidator, checkDetector),
+                new InsufficientMaterialCondition(),
                 new ThreefoldRepetitionCondition(),
                 new FiftyMoveRuleCondition()));
 
@@ -92,7 +94,7 @@ public class Main {
         return new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory());
     }
 
-    /** Game mode: the computer plays black when the user picks option 2. */
+    /** The computer plays black when the console user picks option 2. */
     private static boolean askVersusComputer(Scanner scanner) {
         System.out.println("Modo de juego:\n  1) Dos jugadores\n  2) Contra la computadora (jugás con blancas)");
         System.out.print("Elegí 1 o 2 > ");
