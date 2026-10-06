@@ -54,7 +54,7 @@ public class EnPassantRule implements SpecialMoveRule {
         }
         for (int side : new int[] {-1, 1}) {
             Move candidate = new Move(from,
-                    new Position(from.getRow() + piece.getColor().forward(), from.getColumn() + side), null, true);
+                    new Position(from.getRow() + piece.getColor().forward(), from.getColumn() + side));
             if (board.isInside(candidate.getTo()) && canApply(board, candidate, history)) {
                 result.add(candidate);
             }

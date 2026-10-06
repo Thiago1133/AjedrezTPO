@@ -122,6 +122,18 @@ class BoardTest {
     }
 
     @Test
+    void move_equalityCoversAllFields() {
+        Position from = new Position(6, 0);
+        Position to = new Position(7, 0);
+        assertEquals(new Move(from, to), new Move(from, to));
+        assertEquals(new Move(from, to).hashCode(), new Move(from, to).hashCode());
+        assertEquals(new Move(from, to, "queen"), new Move(from, to, "queen"));
+        assertEquals(new Move(from, to, "queen").hashCode(), new Move(from, to, "queen").hashCode());
+        assertNotEquals(new Move(from, to, "queen"), new Move(from, to, "knight"));
+        assertNotEquals(new Move(from, to), new Move(from, to, "queen"));
+    }
+
+    @Test
     void color_oppositeAndForward() {
         assertEquals(Color.BLACK, Color.WHITE.opposite());
         assertEquals(1, Color.WHITE.forward());
