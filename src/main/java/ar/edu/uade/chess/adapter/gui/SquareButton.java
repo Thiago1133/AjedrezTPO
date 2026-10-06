@@ -12,15 +12,19 @@ final class SquareButton extends JButton {
     private static final Color DARK_COORDINATE = new Color(231, 235, 211);
     private static final Font COORDINATE_FONT = new Font("SansSerif", Font.BOLD, 13);
 
+    private final Font pieceFont;
+    private final Font markerFont;
     private String fileLabel;
     private String rankLabel;
     private Color coordinateColor;
 
-    SquareButton() {
+    SquareButton(int pieceFontSize, int markerFontSize) {
+        pieceFont = new Font("Serif", Font.PLAIN, pieceFontSize);
+        markerFont = new Font("Serif", Font.PLAIN, markerFontSize);
         setMargin(new Insets(0, 0, 0, 0));
         setHorizontalAlignment(CENTER);
         setVerticalAlignment(CENTER);
-        setFont(new Font("Serif", Font.PLAIN, 46));
+        setFont(pieceFont);
         setForeground(new Color(35, 38, 35));
         setOpaque(true);
         setBorderPainted(false);
@@ -33,8 +37,8 @@ final class SquareButton extends JButton {
         coordinateColor = lightSquare ? LIGHT_COORDINATE : DARK_COORDINATE;
     }
 
-    void usePieceFont() { setFont(new Font("Serif", Font.PLAIN, 46)); }
-    void useMarkerFont() { setFont(new Font("Serif", Font.PLAIN, 30)); }
+    void usePieceFont() { setFont(pieceFont); }
+    void useMarkerFont() { setFont(markerFont); }
 
     @Override
     protected void paintComponent(Graphics graphics) {
