@@ -205,15 +205,27 @@ public final class ChessWindow extends JFrame implements GameObserver {
         selected = pos;
         Set<Position> targets = new HashSet<>();
         Set<Position> captureTargets = new HashSet<>();
+        Board current = game.getBoard();
+        Piece piece = current.getPiece(pos);
         for (Move move : game.getLegalMoves()) {
             if (move.getFrom().equals(pos)) {
                 targets.add(move.getTo());
-                if (move.isEnPassant()) captureTargets.add(move.getTo());
+                if (looksLikeEnPassantCapture(current, piece, move)) captureTargets.add(move.getTo());
             }
         }
         board.setHighlights(selected, targets, captureTargets, lastFrom, lastTo);
         message.setText(" ");
         refresh();
+    }
+
+    /**
+     * Presentation-only guess used to highlight en-passant captures: a legal diagonal step onto an
+     * empty square by a piece with the EN_PASSANT trait. The real rule stays in EnPassantRule.
+     */
+    private boolean looksLikeEnPassantCapture(Board current, Piece piece, Move move) {
+        return piece != null && piece.hasTrait(PieceTrait.EN_PASSANT)
+                && current.getPiece(move.getTo()) == null
+                && move.getTo().getColumn() != move.getFrom().getColumn();
     }
 
     private void clearSelection() {
