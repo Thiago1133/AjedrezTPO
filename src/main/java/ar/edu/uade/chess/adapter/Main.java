@@ -39,7 +39,8 @@ public class Main {
         MoveValidator moveValidator = new MoveValidator(checkDetector, commandFactory);
         GameStatusEvaluator statusEvaluator = new GameStatusEvaluator(checkDetector, List.of(
                 new CheckmateCondition(moveValidator, checkDetector), new StalemateCondition(moveValidator, checkDetector),
-                new ThreefoldRepetitionCondition(), new FiftyMoveRuleCondition()));
+                new InsufficientMaterialCondition(), new ThreefoldRepetitionCondition(),
+                new FiftyMoveRuleCondition()));
         // GUI players do not request moves through the console; the window calls Game.move directly.
         HumanPlayerStrategy idle = new HumanPlayerStrategy(color -> null);
         var black = versusComputer

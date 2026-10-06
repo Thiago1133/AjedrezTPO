@@ -16,6 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -53,6 +54,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private Position selected, lastFrom, lastTo;
     private Color checkedColor;
     private boolean versusComputer;
+    private boolean handlingGameOver;
 
     public ChessWindow(Function<Boolean, ChessGame> gameFactory) {
         super("Ajedrez");
@@ -290,10 +292,34 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     @Override public void onGameOver(GameStatus result) {
+        if (handlingGameOver) return;
+        handlingGameOver = true;
         refresh();
-        message.setText("<html>Partida finalizada.<br>Iniciá otra cuando quieras.</html>");
-        restart.setText("Nueva partida");
-        restart.setEnabled(true);
+        status.setText("Finalizada");
+        message.setText(" ");
+        try {
+            JOptionPane.showMessageDialog(this, finalResultText(result), "Fin de la partida",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } finally {
+            // startNewGame removes this observer, so wait until Game finishes notifying observers.
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    startNewGame();
+                } finally {
+                    handlingGameOver = false;
+                }
+            });
+        }
+    }
+
+    private String finalResultText(GameStatus result) {
+        return switch (result) {
+            case CHECKMATE -> "Jaque mate - ganan "
+                    + colorName(game.getCurrentTurn().opposite()).toLowerCase();
+            case STALEMATE -> "Ahogado";
+            case DRAW -> "Tablas";
+            default -> "Partida finalizada";
+        };
     }
 
     private void recordCapturedPieces(Board before, Board after, Color victimColor, List<Piece> captures) {
