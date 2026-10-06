@@ -22,7 +22,10 @@ import java.util.Random;
 /** Application composition root. */
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ChessWindow(Main::createGame).setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            ChessWindow window = new ChessWindow(Main::createGame);
+            if (window.hasGame()) window.setVisible(true);
+        });
     }
 
     private static Game createGame(boolean versusComputer) {
