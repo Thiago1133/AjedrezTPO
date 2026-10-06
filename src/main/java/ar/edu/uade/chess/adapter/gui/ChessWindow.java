@@ -61,8 +61,16 @@ public final class ChessWindow extends JFrame implements GameObserver {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(850, 650));
         startNewGame();
+        if (game == null) {
+            dispose();
+            return;
+        }
         pack();
         setLocationRelativeTo(null);
+    }
+
+    public boolean hasGame() {
+        return game != null;
     }
 
     private void buildLayout() {
@@ -119,10 +127,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void startNewGame() {
-        if (game != null) game.removeObserver(this);
         Object[] modes = {"Dos jugadores", "Contra la computadora"};
         int mode = JOptionPane.showOptionDialog(this, "Elegí el modo de juego", "Nueva partida",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, modes, modes[0]);
+        if (mode != 0 && mode != 1) return;
+
+        if (game != null) game.removeObserver(this);
         versusComputer = mode == 1;
         game = gameFactory.apply(versusComputer);
         game.addObserver(this);
