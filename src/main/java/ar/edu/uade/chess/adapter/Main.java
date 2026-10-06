@@ -44,6 +44,7 @@ import java.util.Scanner;
  */
 public class Main {
     private static final String CONSOLE_FLAG = "--consola";
+    private static final String VERSUS_COMPUTER_OPTION = "2";
 
     public static void main(String[] args) {
         if (args.length > 0 && args[0].equals(CONSOLE_FLAG)) {
@@ -95,6 +96,6 @@ public class Main {
     private static boolean askVersusComputer(Scanner scanner) {
         System.out.println("Modo de juego:\n  1) Dos jugadores\n  2) Contra la computadora (jugás con blancas)");
         System.out.print("Elegí 1 o 2 > ");
-        return scanner.hasNextLine() && scanner.nextLine().trim().equals("2");
+        return scanner.hasNextLine() && scanner.nextLine().trim().equals(VERSUS_COMPUTER_OPTION);
     }
 }
