@@ -1,7 +1,6 @@
 package ar.edu.uade.chess.adapter.gui;
 
 import ar.edu.uade.chess.core.board.Board;
-import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.piece.Piece;
 
@@ -82,7 +81,7 @@ final class BoardPanel extends JPanel {
             Piece piece = board.getPiece(pos);
             boolean target = targets.contains(pos);
             if (piece != null) {
-                square.setText(symbol(piece));
+                square.setText(PieceGlyphs.of(piece));
                 // Unicode glyphs already distinguish piece colors; a dark ink stays legible on both square colors.
                 square.setForeground(new java.awt.Color(35, 38, 35));
                 if (target || captureTargets.contains(pos)) {
@@ -106,23 +105,5 @@ final class BoardPanel extends JPanel {
         return flipped
                 ? new Position(viewRow, 7 - viewColumn)
                 : new Position(7 - viewRow, viewColumn);
-    }
-
-    private String symbol(Piece p) {
-        if (p == null) {
-        return "";
-        }
-
-        boolean white = p.getColor() == Color.WHITE;
-
-        return switch (p.getId()) {
-            case "king" -> white ? "♔" : "♚";
-            case "queen" -> white ? "♕" : "♛";
-            case "rook" -> white ? "♖" : "♜";
-            case "bishop" -> white ? "♗" : "♝";
-            case "knight" -> white ? "♘" : "♞";
-            case "pawn" -> white ? "♙" : "♟";
-            default -> "";
-        };
     }
 }
