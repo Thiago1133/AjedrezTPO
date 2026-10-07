@@ -42,4 +42,14 @@ public class PromotionCommand implements MoveCommand {
     public boolean isIrreversible() {
         return true;
     }
+
+    @Override
+    public Piece getCapturedPiece() {
+        return capturedPiece;
+    }
+
+    @Override
+    public boolean isPromotion() {
+        return true;
+    }
 }

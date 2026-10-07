@@ -48,4 +48,9 @@ public class NormalMoveCommand implements MoveCommand {
     public boolean isIrreversible() {
         return irreversible;
     }
+
+    @Override
+    public Piece getCapturedPiece() {
+        return capturedPiece;
+    }
 }

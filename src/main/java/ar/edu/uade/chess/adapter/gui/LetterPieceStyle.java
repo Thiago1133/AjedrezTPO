@@ -35,4 +35,9 @@ final class LetterPieceStyle implements PieceStyle {
     public java.awt.Color outlineFor(Piece piece) {
         return piece.getColor() == Color.WHITE ? WHITE_OUTLINE : null;
     }
+
+    @Override
+    public float outlineWidth(int fontSize) {
+        return fontSize / 12f;
+    }
 }

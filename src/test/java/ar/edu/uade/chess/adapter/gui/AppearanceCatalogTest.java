@@ -83,6 +83,9 @@ class AppearanceCatalogTest {
             assertEquals(style.symbolFor(white), style.symbolFor(black), style.displayName());
             assertNotEquals(style.fillFor(white), style.fillFor(black), style.displayName());
             assertNotNull(style.outlineFor(white), "white needs an outline on light squares");
+            assertNotEquals(style.fillFor(white), style.outlineFor(white),
+                    style.displayName() + ": a white outline would vanish on light squares");
+            assertTrue(style.outlineWidth(40) > 0, style.displayName());
         }
     }
 

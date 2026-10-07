@@ -21,7 +21,7 @@ import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
 import ar.edu.uade.chess.core.piece.StandardChessSetup;
-import ar.edu.uade.chess.core.port.MoveInput;
+import ar.edu.uade.chess.core.port.out.MoveInput;
 import ar.edu.uade.chess.core.rules.CastlingRule;
 import ar.edu.uade.chess.core.rules.CheckDetector;
 import ar.edu.uade.chess.core.rules.EnPassantRule;

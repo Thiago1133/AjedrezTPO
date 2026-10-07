@@ -1,4 +1,4 @@
-package ar.edu.uade.chess.core.port;
+package ar.edu.uade.chess.core.port.out;
 
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;

@@ -2,8 +2,8 @@ package ar.edu.uade.chess.core.game;
 
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
-import ar.edu.uade.chess.core.port.ChessGame;
-import ar.edu.uade.chess.core.port.MoveInput;
+import ar.edu.uade.chess.core.port.in.GameQueries;
+import ar.edu.uade.chess.core.port.out.MoveInput;
 
 /** Delegates the decision to a person through the MoveInput port. */
 public class HumanPlayerStrategy implements PlayerStrategy {
@@ -14,7 +14,7 @@ public class HumanPlayerStrategy implements PlayerStrategy {
     }
 
     @Override
-    public Move chooseMove(ChessGame game, Color color) {
+    public Move chooseMove(GameQueries game, Color color) {
         return input.readMove(color);
     }
 }

@@ -7,7 +7,7 @@ import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
 import ar.edu.uade.chess.core.piece.SlidingMovement;
-import ar.edu.uade.chess.core.port.PromotionOptions;
+import ar.edu.uade.chess.core.port.in.PromotionOptions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

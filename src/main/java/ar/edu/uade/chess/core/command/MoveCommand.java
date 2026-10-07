@@ -2,6 +2,7 @@ package ar.edu.uade.chess.core.command;
 
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Move;
+import ar.edu.uade.chess.core.piece.Piece;
 
 /**
  * A move as an object (Command pattern). It remembers what it changed during
@@ -19,4 +20,12 @@ public interface MoveCommand {
      * pawn advance, castling...). Valid after execute. Used by draw rules.
      */
     boolean isIrreversible();
+
+    /** The piece this move took off the board, or null if it captured nothing. Valid after execute. */
+    Piece getCapturedPiece();
+
+    /** True if the moving piece is replaced by a chosen one (promotion). */
+    default boolean isPromotion() {
+        return false;
+    }
 }

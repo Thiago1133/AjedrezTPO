@@ -6,15 +6,14 @@ import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.piece.Piece;
-import ar.edu.uade.chess.core.port.ChessGame;
-import ar.edu.uade.chess.core.port.GameObserver;
-import ar.edu.uade.chess.core.port.MoveInput;
-import ar.edu.uade.chess.core.port.PromotionOptions;
+import ar.edu.uade.chess.core.port.in.ChessGame;
+import ar.edu.uade.chess.core.port.out.GameObserver;
+import ar.edu.uade.chess.core.port.out.MoveInput;
+import ar.edu.uade.chess.core.port.in.PromotionOptions;
 
-import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 /**
  * Text adapter. Translates console input into calls on the ChessGame port and
@@ -30,8 +29,6 @@ public class ConsoleUI implements MoveInput, GameObserver {
     private final Scanner scanner;
     private final PromotionNotation promotionNotation;
     private final Map<String, Runnable> commands;
-    /** Colors this console has been asked to play for; the others are the computer. */
-    private final Set<Color> humanColors = EnumSet.noneOf(Color.class);
     private ChessGame game;
     private boolean quitRequested;
     private boolean turnInterrupted;
@@ -40,8 +37,9 @@ public class ConsoleUI implements MoveInput, GameObserver {
         this.scanner = scanner;
         this.promotionNotation = new PromotionNotation(promotionOptions);
         Runnable quit = () -> quitRequested = true;
-        Runnable undo = () -> stepUntilHumanTurn(game::undo);
-        Runnable redo = () -> stepUntilHumanTurn(game::redo);
+        // The core takes back (or replays) the computer's reply too, so the human moves next.
+        Runnable undo = () -> game.undo();
+        Runnable redo = () -> game.redo();
         Runnable help = this::showHelp;
         this.commands = Map.of(
                 "salir", quit, "quit", quit,
@@ -70,7 +68,6 @@ public class ConsoleUI implements MoveInput, GameObserver {
 
     @Override
     public Move readMove(Color color) {
-        humanColors.add(color);
         while (true) {
             System.out.print(COLOR_NAMES.get(game.getCurrentTurn()) + " > ");
             if (!scanner.hasNextLine()) {
@@ -107,6 +104,7 @@ public class ConsoleUI implements MoveInput, GameObserver {
     @Override
     public void onTurnChanged(Color turn) {
         render(game.getBoard());
+        showCaptures();
         showMessage("Turno de las " + COLOR_NAMES.get(turn) + ".");
     }
 
@@ -122,6 +120,20 @@ public class ConsoleUI implements MoveInput, GameObserver {
         if (status == GameStatus.CHECKMATE) {
             showMessage("Ganan las " + COLOR_NAMES.get(game.getCurrentTurn().opposite()) + ".");
         }
+    }
+
+    /** Captured pieces per side, as the core reports them, e.g. "blancas: q n (+4)". */
+    private void showCaptures() {
+        StringBuilder line = new StringBuilder();
+        for (Color capturer : Color.values()) {
+            List<Piece> captured = game.getCapturedPieces(capturer);
+            if (captured.isEmpty()) continue;
+            line.append(line.isEmpty() ? "Capturadas por " : " | ").append(COLOR_NAMES.get(capturer)).append(':');
+            captured.forEach(piece -> line.append(' ').append(piece.getSymbol()));
+            int advantage = game.getMaterialAdvantage(capturer);
+            if (advantage > 0) line.append(" (+").append(advantage).append(')');
+        }
+        if (!line.isEmpty()) showMessage(line.toString());
     }
 
     /** Columns are as wide as the longest column name, so boards wider than 26 columns line up. */
@@ -161,20 +173,6 @@ public class ConsoleUI implements MoveInput, GameObserver {
         }
         String promotionId = tokens.length == 3 ? promotionNotation.idFor(tokens[2], game.getCurrentTurn()) : null;
         return new Move(from, to, promotionId);
-    }
-
-    /**
-     * Undoes (or redoes) one move, and keeps going while it is the computer's turn,
-     * so that against the AI one "deshacer" takes back both the AI's move and ours.
-     */
-    private void stepUntilHumanTurn(Runnable step) {
-        do {
-            Color before = game.getCurrentTurn();
-            step.run();
-            if (game.getCurrentTurn() == before) {
-                return; // nothing left to undo/redo
-            }
-        } while (!humanColors.contains(game.getCurrentTurn()));
     }
 
     private void showHelp() {

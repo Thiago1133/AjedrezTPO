@@ -40,7 +40,9 @@ src/main/java/ar/edu/uade/chess/
   core/rules     Detección de jaque, validación de movimientos y reglas especiales
   core/status    Estado de la partida y condiciones de fin
   core/game      Partida, turnos, jugadores y estrategias
-  core/port      Puertos: ChessGame (entrada), GameObserver y MoveInput (salida)
+  core/port/in   Puertos de entrada (los adaptadores le piden al núcleo): GameActions, GameQueries,
+                 GameSubscriptions (ChessGame las agrupa) y PromotionOptions
+  core/port/out  Puertos de salida (el núcleo necesita de afuera): GameObserver, MoveInput
   adapter        Consola y Main (único lugar donde se instancia y conecta todo)
   adapter/gui    Interfaz gráfica (Swing): ventana, tablero, casillas, estilos de piezas y colores de tablero
 ```

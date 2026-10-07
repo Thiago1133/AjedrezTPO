@@ -3,7 +3,7 @@ package ar.edu.uade.chess.core.game;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
-import ar.edu.uade.chess.core.port.ChessGame;
+import ar.edu.uade.chess.core.port.in.GameQueries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,12 @@ public class AIPlayerStrategy implements PlayerStrategy {
     }
 
     @Override
-    public Move chooseMove(ChessGame game, Color color) {
+    public boolean isAutomatic() {
+        return true;
+    }
+
+    @Override
+    public Move chooseMove(GameQueries game, Color color) {
         List<Move> legalMoves = game.getLegalMoves();
         if (legalMoves.isEmpty()) {
             return null;

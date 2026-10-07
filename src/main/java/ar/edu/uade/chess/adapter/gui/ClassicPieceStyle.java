@@ -41,4 +41,9 @@ final class ClassicPieceStyle implements PieceStyle {
     public Color outlineFor(Piece piece) {
         return null;
     }
+
+    @Override
+    public float outlineWidth(int fontSize) {
+        return 0f;
+    }
 }

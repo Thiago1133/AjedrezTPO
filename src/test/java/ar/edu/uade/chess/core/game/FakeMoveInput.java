@@ -2,7 +2,7 @@ package ar.edu.uade.chess.core.game;
 
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
-import ar.edu.uade.chess.core.port.MoveInput;
+import ar.edu.uade.chess.core.port.out.MoveInput;
 
 import java.util.ArrayDeque;
 import java.util.List;

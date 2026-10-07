@@ -22,4 +22,7 @@ interface PieceStyle {
 
     /** Outline drawn around the symbol, or null for none. */
     Color outlineFor(Piece piece);
+
+    /** Thickness of that outline for a symbol of the given size; each style decides its own. */
+    float outlineWidth(int fontSize);
 }
