@@ -19,7 +19,7 @@ public class KnightDefinition implements PieceDefinition {
     @Override
     public Piece create(Color color) {
         return new Piece(getId(), color == Color.WHITE ? 'N' : 'n', color, 3,
-                Set.of(),
+                Set.of(PieceTrait.MINOR),
                 List.of(new JumpMovement(KNIGHT_JUMPS)));
     }
 }
