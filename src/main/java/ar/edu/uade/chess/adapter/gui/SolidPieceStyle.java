@@ -9,8 +9,9 @@ import java.util.Map;
 /** The same solid silhouette for both sides: white pieces filled white with a dark outline. */
 final class SolidPieceStyle implements PieceStyle {
     private static final java.awt.Color WHITE_FILL = new java.awt.Color(250, 250, 248);
-    private static final java.awt.Color WHITE_OUTLINE = new java.awt.Color(40, 40, 40);
+    private static final java.awt.Color WHITE_OUTLINE = new java.awt.Color(250, 250, 248);
     private static final java.awt.Color BLACK_FILL = new java.awt.Color(32, 32, 32);
+    private static final java.awt.Color BLACK_OUTLINE = new java.awt.Color(32, 32, 32);
     private static final Map<Character, String> SILHOUETTES = Map.of(
             'K', "♚", 'Q', "♛", 'R', "♜", 'B', "♝", 'N', "♞", 'P', "♟");
 
@@ -37,6 +38,6 @@ final class SolidPieceStyle implements PieceStyle {
 
     @Override
     public java.awt.Color outlineFor(Piece piece) {
-        return piece.getColor() == Color.WHITE ? WHITE_OUTLINE : null;
+        return piece.getColor() == Color.WHITE ? WHITE_OUTLINE : BLACK_OUTLINE;
     }
 }
