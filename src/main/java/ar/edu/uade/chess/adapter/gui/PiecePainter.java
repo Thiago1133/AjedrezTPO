@@ -32,7 +32,8 @@ final class PiecePainter {
             g.fill(shape);
             if (style.outlineFor(piece) != null) {
                 g.setColor(style.outlineFor(piece));
-                g.setStroke(new BasicStroke(Math.max(1f, fontSize / 28f)));
+                float strokeWidth = style instanceof SolidPieceStyle ? fontSize / 20f : fontSize / 28f;
+                g.setStroke(new BasicStroke(Math.max(1f, strokeWidth)));
                 g.draw(shape);
             }
         } finally {

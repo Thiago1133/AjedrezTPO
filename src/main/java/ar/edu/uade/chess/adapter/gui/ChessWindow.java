@@ -135,10 +135,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
         undo.setEnabled(false);
         undo.addActionListener(e -> undoLastMove());
         sidebar.add(undo);
+        sidebar.add(Box.createVerticalStrut(10));
         redo.setAlignmentX(LEFT_ALIGNMENT);
         redo.setEnabled(false);
         redo.addActionListener(e -> redoLastMove());
         sidebar.add(redo);
+        sidebar.add(Box.createVerticalStrut(10));
         rotate.setAlignmentX(LEFT_ALIGNMENT);
         rotate.addActionListener(e -> {
             board.setFlipped(!board.isFlipped(), game.getBoard());
@@ -146,6 +148,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
             rankRuler.repaint();
         });
         sidebar.add(rotate);
+        sidebar.add(Box.createVerticalStrut(10));
         restart.setAlignmentX(LEFT_ALIGNMENT);
         restart.setEnabled(true);
         restart.addActionListener(e -> startNewGame());
