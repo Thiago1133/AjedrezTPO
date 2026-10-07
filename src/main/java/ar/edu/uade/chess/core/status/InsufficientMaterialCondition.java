@@ -6,46 +6,44 @@ import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.command.MoveHistory;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.piece.PieceTrait;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** Draw for the explicitly supported insufficient-material combinations. */
+/**
+ * Draw when neither side can possibly checkmate: royal pieces alone, royal pieces plus a
+ * single MINOR piece, or two opposing COLOR_BOUND pieces on squares of the same color.
+ * Pieces are recognised by their traits, never by name, so new pieces opt in by
+ * declaring traits.
+ */
 public class InsufficientMaterialCondition implements GameEndCondition {
+
     @Override
     public boolean isMet(Board board, MoveHistory history, Color toMove) {
-        int whiteKings = 0;
-        int blackKings = 0;
-        List<LocatedPiece> otherPieces = new ArrayList<>();
-
-        for (int row = 0; row < board.getRows(); row++) {
-            for (int column = 0; column < board.getColumns(); column++) {
-                Position position = new Position(row, column);
+        List<LocatedPiece> nonRoyal = new ArrayList<>();
+        for (Color color : Color.values()) {
+            int royalPieces = 0;
+            for (Position position : board.getPositionsOf(color)) {
                 Piece piece = board.getPiece(position);
-                if (piece == null) continue;
-                if (piece.getId().equals("king")) {
-                    if (piece.getColor() == Color.WHITE) whiteKings++;
-                    else blackKings++;
+                if (piece.hasTrait(PieceTrait.ROYAL)) {
+                    royalPieces++;
                 } else {
-                    otherPieces.add(new LocatedPiece(piece, position));
+                    nonRoyal.add(new LocatedPiece(piece, position));
                 }
+            }
+            if (royalPieces != 1) {
+                return false;
             }
         }
 
-        if (whiteKings != 1 || blackKings != 1) return false;
-        if (otherPieces.isEmpty()) return true;
-        if (otherPieces.size() == 1) {
-            String id = otherPieces.getFirst().piece().getId();
-            return id.equals("bishop") || id.equals("knight");
+        if (nonRoyal.isEmpty()) {
+            return true;
         }
-        if (otherPieces.size() != 2) return false;
-
-        LocatedPiece first = otherPieces.get(0);
-        LocatedPiece second = otherPieces.get(1);
-        return first.piece().getId().equals("bishop")
-                && second.piece().getId().equals("bishop")
-                && first.piece().getColor() != second.piece().getColor()
-                && squareColor(first.position()) == squareColor(second.position());
+        if (nonRoyal.size() == 1) {
+            return nonRoyal.get(0).piece().hasTrait(PieceTrait.MINOR);
+        }
+        return nonRoyal.size() == 2 && opposingColorBoundOnSameSquareColor(nonRoyal.get(0), nonRoyal.get(1));
     }
 
     @Override
@@ -53,8 +51,15 @@ public class InsufficientMaterialCondition implements GameEndCondition {
         return GameStatus.DRAW;
     }
 
-    private boolean squareColor(Position position) {
-        return (position.getRow() + position.getColumn()) % 2 == 0;
+    private boolean opposingColorBoundOnSameSquareColor(LocatedPiece first, LocatedPiece second) {
+        return first.piece().hasTrait(PieceTrait.COLOR_BOUND)
+                && second.piece().hasTrait(PieceTrait.COLOR_BOUND)
+                && first.piece().getColor() != second.piece().getColor()
+                && isLightSquare(first.position()) == isLightSquare(second.position());
+    }
+
+    private boolean isLightSquare(Position position) {
+        return (position.getRow() + position.getColumn()) % 2 != 0;
     }
 
     private record LocatedPiece(Piece piece, Position position) { }

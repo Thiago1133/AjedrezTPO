@@ -16,7 +16,7 @@ public class BishopDefinition implements PieceDefinition {
     @Override
     public Piece create(Color color) {
         return new Piece(getId(), color == Color.WHITE ? 'B' : 'b', color, 3,
-                Set.of(),
+                Set.of(PieceTrait.MINOR, PieceTrait.COLOR_BOUND),
                 List.of(new SlidingMovement(Direction.DIAGONAL, Integer.MAX_VALUE)));
     }
 }

@@ -12,5 +12,9 @@ public enum PieceTrait {
     /** Promotes on reaching the last row. */
     PROMOTES,
     /** Can capture and be captured en passant. */
-    EN_PASSANT
+    EN_PASSANT,
+    /** Cannot force checkmate on its own (used by the insufficient material draw). */
+    MINOR,
+    /** Always stays on squares of the same color. */
+    COLOR_BOUND
 }
