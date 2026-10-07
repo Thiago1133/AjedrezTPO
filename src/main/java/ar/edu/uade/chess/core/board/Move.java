@@ -31,16 +31,20 @@ public final class Move {
         return promotionId;
     }
 
+    /**
+     * A move is identified by its squares. The promotion choice only says which piece to
+     * create, so it is not part of the identity (and no text is compared).
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Move other)) return false;
-        return from.equals(other.from) && to.equals(other.to) && Objects.equals(promotionId, other.promotionId);
+        return from.equals(other.from) && to.equals(other.to);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(from, to, promotionId);
+        return Objects.hash(from, to);
     }
 
     @Override

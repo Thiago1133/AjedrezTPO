@@ -9,6 +9,7 @@ import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.port.ChessGame;
 import ar.edu.uade.chess.core.port.GameObserver;
 import ar.edu.uade.chess.core.port.MoveInput;
+import ar.edu.uade.chess.core.port.PromotionOptions;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -20,11 +21,6 @@ import java.util.Set;
  * renders what the core announces. All user-facing text and notation live here.
  */
 public class ConsoleUI implements MoveInput, GameObserver {
-    private static final Map<String, String> PROMOTION_IDS = Map.of(
-            "q", "queen", "d", "queen",
-            "r", "rook", "t", "rook",
-            "b", "bishop", "a", "bishop",
-            "n", "knight", "c", "knight");
     private static final Map<Color, String> COLOR_NAMES = Map.of(Color.WHITE, "blancas", Color.BLACK, "negras");
     private static final Map<GameStatus, String> RESULT_MESSAGES = Map.of(
             GameStatus.CHECKMATE, "¡Jaque mate!",
@@ -32,6 +28,7 @@ public class ConsoleUI implements MoveInput, GameObserver {
             GameStatus.DRAW, "Tablas.");
 
     private final Scanner scanner;
+    private final PromotionNotation promotionNotation;
     private final Map<String, Runnable> commands;
     /** Colors this console has been asked to play for; the others are the computer. */
     private final Set<Color> humanColors = EnumSet.noneOf(Color.class);
@@ -39,8 +36,9 @@ public class ConsoleUI implements MoveInput, GameObserver {
     private boolean quitRequested;
     private boolean turnInterrupted;
 
-    public ConsoleUI(Scanner scanner) {
+    public ConsoleUI(Scanner scanner, PromotionOptions promotionOptions) {
         this.scanner = scanner;
+        this.promotionNotation = new PromotionNotation(promotionOptions);
         Runnable quit = () -> quitRequested = true;
         Runnable undo = () -> stepUntilHumanTurn(game::undo);
         Runnable redo = () -> stepUntilHumanTurn(game::redo);
@@ -103,7 +101,7 @@ public class ConsoleUI implements MoveInput, GameObserver {
 
     @Override
     public void onMoveExecuted(Move move) {
-        showMessage("Jugada: " + format(move.getFrom()) + " -> " + format(move.getTo()));
+        showMessage("Jugada: " + SquareNotation.square(move.getFrom()) + " -> " + SquareNotation.square(move.getTo()));
     }
 
     @Override
@@ -126,21 +124,28 @@ public class ConsoleUI implements MoveInput, GameObserver {
         }
     }
 
+    /** Columns are as wide as the longest column name, so boards wider than 26 columns line up. */
     private void render(Board board) {
+        int cellWidth = SquareNotation.file(board.getColumns() - 1).length() + 1;
+        int rankWidth = SquareNotation.rank(board.getRows() - 1).length() + 2;
         StringBuilder out = new StringBuilder("\n");
         for (int row = board.getRows() - 1; row >= 0; row--) {
-            out.append(String.format("%2d ", row + 1));
+            out.append(pad(SquareNotation.rank(row), rankWidth));
             for (int column = 0; column < board.getColumns(); column++) {
                 Piece piece = board.getPiece(new Position(row, column));
-                out.append(piece == null ? '.' : piece.getSymbol()).append(' ');
+                out.append(pad(String.valueOf(piece == null ? '.' : piece.getSymbol()), cellWidth));
             }
             out.append('\n');
         }
-        out.append("   ");
+        out.append(" ".repeat(rankWidth));
         for (int column = 0; column < board.getColumns(); column++) {
-            out.append((char) ('a' + column)).append(' ');
+            out.append(pad(SquareNotation.file(column), cellWidth));
         }
         System.out.println(out);
+    }
+
+    private static String pad(String text, int width) {
+        return " ".repeat(Math.max(0, width - text.length() - 1)) + text + " ";
     }
 
     /** Parses "e2 e4" or "e7 e8 q" (promotion). Returns null if the text is not a move. */
@@ -149,30 +154,13 @@ public class ConsoleUI implements MoveInput, GameObserver {
         if (tokens.length < 2 || tokens.length > 3) {
             return null;
         }
-        Position from = parsePosition(tokens[0]);
-        Position to = parsePosition(tokens[1]);
+        Position from = SquareNotation.parse(tokens[0]);
+        Position to = SquareNotation.parse(tokens[1]);
         if (from == null || to == null) {
             return null;
         }
-        String promotionId = tokens.length == 3 ? PROMOTION_IDS.getOrDefault(tokens[2], tokens[2]) : null;
+        String promotionId = tokens.length == 3 ? promotionNotation.idFor(tokens[2], game.getCurrentTurn()) : null;
         return new Move(from, to, promotionId);
-    }
-
-    /** Parses algebraic coordinates such as "e2". Returns null if malformed. */
-    private Position parsePosition(String text) {
-        if (text.length() < 2 || text.charAt(0) < 'a' || text.charAt(0) > 'z') {
-            return null;
-        }
-        try {
-            int row = Integer.parseInt(text.substring(1)) - 1;
-            return new Position(row, text.charAt(0) - 'a');
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private String format(Position position) {
-        return "" + (char) ('a' + position.getColumn()) + (position.getRow() + 1);
     }
 
     /**
@@ -193,10 +181,10 @@ public class ConsoleUI implements MoveInput, GameObserver {
         showMessage("""
                 Comandos:
                   e2 e4      mover de e2 a e4
-                  e7 e8 q    mover y promover (q/d dama, r/t torre, b/a alfil, n/c caballo)
+                  e7 e8 q    mover y promover (%s)
                   deshacer   deshace la última jugada
                   rehacer    rehace la jugada deshecha
-                  salir      termina la partida""");
+                  salir      termina la partida""".formatted(promotionNotation.describe(Color.WHITE)));
     }
 
     private void showMessage(String message) {
