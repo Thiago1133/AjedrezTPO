@@ -22,7 +22,6 @@ public class ThreefoldRepetitionCondition implements GameEndCondition {
 
     @Override
     public boolean isMet(Board board, MoveHistory history, Color toMove) {
-        String current = positionKey(board, toMove);
         Board past = board.copy();
         Color side = toMove;
         int occurrences = 1;
@@ -30,7 +29,7 @@ public class ThreefoldRepetitionCondition implements GameEndCondition {
         for (int i = executed.size() - 1; i >= 0 && !executed.get(i).isIrreversible(); i--) {
             executed.get(i).undo(past);
             side = side.opposite();
-            if (current.equals(positionKey(past, side))) {
+            if (side == toMove && samePlacement(board, past)) {
                 occurrences++;
             }
         }
@@ -42,14 +41,23 @@ public class ThreefoldRepetitionCondition implements GameEndCondition {
         return GameStatus.DRAW;
     }
 
-    private static String positionKey(Board board, Color toMove) {
-        StringBuilder key = new StringBuilder(toMove.name()).append(':');
-        for (int row = 0; row < board.getRows(); row++) {
-            for (int column = 0; column < board.getColumns(); column++) {
-                Piece piece = board.getPiece(new Position(row, column));
-                key.append(piece == null ? '.' : piece.getSymbol());
+    /** Same kind and color of piece on every square (compares symbols and colors, never text). */
+    private static boolean samePlacement(Board current, Board past) {
+        for (int row = 0; row < current.getRows(); row++) {
+            for (int column = 0; column < current.getColumns(); column++) {
+                Position position = new Position(row, column);
+                if (!sameKind(current.getPiece(position), past.getPiece(position))) {
+                    return false;
+                }
             }
         }
-        return key.toString();
+        return true;
+    }
+
+    private static boolean sameKind(Piece a, Piece b) {
+        if (a == null || b == null) {
+            return a == b;
+        }
+        return a.getSymbol() == b.getSymbol() && a.getColor() == b.getColor();
     }
 }

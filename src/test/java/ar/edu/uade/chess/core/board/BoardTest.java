@@ -122,15 +122,24 @@ class BoardTest {
     }
 
     @Test
-    void move_equalityCoversAllFields() {
+    void move_equalityIsDefinedBySquares() {
         Position from = new Position(6, 0);
         Position to = new Position(7, 0);
         assertEquals(new Move(from, to), new Move(from, to));
         assertEquals(new Move(from, to).hashCode(), new Move(from, to).hashCode());
-        assertEquals(new Move(from, to, "queen"), new Move(from, to, "queen"));
-        assertEquals(new Move(from, to, "queen").hashCode(), new Move(from, to, "queen").hashCode());
-        assertNotEquals(new Move(from, to, "queen"), new Move(from, to, "knight"));
-        assertNotEquals(new Move(from, to), new Move(from, to, "queen"));
+        assertNotEquals(new Move(from, to), new Move(from, new Position(7, 1)));
+        assertNotEquals(new Move(from, to), new Move(new Position(6, 1), to));
+    }
+
+    @Test
+    void move_promotionChoiceIsCarriedButIsNotPartOfTheIdentity() {
+        Position from = new Position(6, 0);
+        Position to = new Position(7, 0);
+        Move promotion = new Move(from, to, "knight");
+
+        assertEquals("knight", promotion.getPromotionId());
+        assertEquals(new Move(from, to), promotion);
+        assertEquals(new Move(from, to).hashCode(), promotion.hashCode());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package ar.edu.uade.chess.adapter.gui;
 
+import ar.edu.uade.chess.adapter.PieceNames;
+import ar.edu.uade.chess.adapter.SquareNotation;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Direction;
@@ -10,18 +12,22 @@ import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.ChessGame;
 import ar.edu.uade.chess.core.port.GameObserver;
+import ar.edu.uade.chess.core.port.PromotionOptions;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Rectangle;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -32,17 +38,24 @@ import java.util.function.Function;
 
 /** Swing adapter: translates clicks into moves and displays core state. */
 public final class ChessWindow extends JFrame implements GameObserver {
+    private static final int VALUE_FONT_SIZE = 18;
+    private static final int SECTION_GAP = 12;
+    private static final int ADVANTAGE_GAP = 7;
     private final Function<Boolean, ChessGame> gameFactory;
     private final List<Piece> previewPieces;
+    private final PromotionOptions promotionOptions;
     /** Last options chosen; offered again when the next game starts (only while the window is open). */
     private NewGameDialog.NewGameChoice lastChoice = new NewGameDialog.NewGameChoice(false,
             AppearanceCatalog.pieceStyles().get(0), AppearanceCatalog.boardThemes().get(0));
     private final BoardPanel board = new BoardPanel(this::squareClicked, lastChoice.style(), lastChoice.theme());
+    private final JScrollPane boardScroll = new JScrollPane(board);
+    private final CoordinateRuler fileRuler = new CoordinateRuler(board, CoordinateRuler.Axis.FILES);
+    private final CoordinateRuler rankRuler = new CoordinateRuler(board, CoordinateRuler.Axis.RANKS);
     private final JLabel turn = new JLabel();
     private final JLabel status = new JLabel();
-    private final JLabel capturedByWhite = new JLabel(" ");
+    private final CapturedPiecesView capturedByWhite = new CapturedPiecesView();
     private final JLabel whiteAdvantage = new JLabel(" ");
-    private final JLabel capturedByBlack = new JLabel(" ");
+    private final CapturedPiecesView capturedByBlack = new CapturedPiecesView();
     private final JLabel blackAdvantage = new JLabel(" ");
     private final JLabel lastMoveText = new JLabel("—");
     private final JLabel message = new JLabel(" ");
@@ -60,10 +73,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
     /** Moves undone that can still be redone; a new move discards them, as in the core. */
     private int redoablePlies;
 
-    public ChessWindow(Function<Boolean, ChessGame> gameFactory, List<Piece> previewPieces) {
+    public ChessWindow(Function<Boolean, ChessGame> gameFactory, List<Piece> previewPieces,
+                       PromotionOptions promotionOptions) {
         super("Ajedrez");
         this.gameFactory = gameFactory;
         this.previewPieces = List.copyOf(previewPieces);
+        this.promotionOptions = promotionOptions;
         buildLayout();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(850, 650));
@@ -88,7 +103,14 @@ public final class ChessWindow extends JFrame implements GameObserver {
         heading.setForeground(java.awt.Color.WHITE);
         heading.setFont(new Font("SansSerif", Font.BOLD, 25));
         root.add(heading, BorderLayout.NORTH);
-        root.add(board, BorderLayout.CENTER);
+        java.awt.Color background = new java.awt.Color(34, 37, 43);
+        boardScroll.setBorder(BorderFactory.createEmptyBorder());
+        boardScroll.getViewport().setBackground(background);
+        boardScroll.setBackground(background);
+        JPanel corner = new JPanel();
+        corner.setBackground(background);
+        boardScroll.setCorner(JScrollPane.UPPER_LEFT_CORNER, corner);
+        root.add(boardScroll, BorderLayout.CENTER);
 
         JPanel sidebar = new JPanel();
         sidebar.setPreferredSize(new Dimension(230, 0));
@@ -97,10 +119,14 @@ public final class ChessWindow extends JFrame implements GameObserver {
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         addInfo(sidebar, "TURNO", turn);
         addInfo(sidebar, "ESTADO", status);
-        addInfo(sidebar, "CAPTURADAS POR BLANCAS", capturedByWhite);
-        addInfo(sidebar, "", whiteAdvantage);
-        addInfo(sidebar, "CAPTURADAS POR NEGRAS", capturedByBlack);
-        addInfo(sidebar, "", blackAdvantage);
+        addTitle(sidebar, "CAPTURADAS POR BLANCAS");
+        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(capturedByWhite);
+        addValue(sidebar, whiteAdvantage, VALUE_FONT_SIZE, ADVANTAGE_GAP);
+        addTitle(sidebar, "CAPTURADAS POR NEGRAS");
+        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(capturedByBlack);
+        addValue(sidebar, blackAdvantage, VALUE_FONT_SIZE, ADVANTAGE_GAP);
         addInfo(sidebar, "ÚLTIMA JUGADA", lastMoveText);
         message.setForeground(new java.awt.Color(235, 201, 92));
         message.setBorder(BorderFactory.createEmptyBorder(4, 0, 12, 0));
@@ -114,7 +140,11 @@ public final class ChessWindow extends JFrame implements GameObserver {
         redo.addActionListener(e -> redoLastMove());
         sidebar.add(redo);
         rotate.setAlignmentX(LEFT_ALIGNMENT);
-        rotate.addActionListener(e -> board.setFlipped(!board.isFlipped(), game.getBoard()));
+        rotate.addActionListener(e -> {
+            board.setFlipped(!board.isFlipped(), game.getBoard());
+            fileRuler.repaint();
+            rankRuler.repaint();
+        });
         sidebar.add(rotate);
         restart.setAlignmentX(LEFT_ALIGNMENT);
         restart.setEnabled(true);
@@ -125,15 +155,21 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void addInfo(JPanel panel, String title, JLabel value) {
-        if (!title.isEmpty()) {
-            JLabel label = new JLabel(title);
-            label.setForeground(new java.awt.Color(175, 181, 191));
-            label.setFont(new Font("SansSerif", Font.BOLD, 11));
-            panel.add(label);
-        }
+        addTitle(panel, title);
+        addValue(panel, value, VALUE_FONT_SIZE, SECTION_GAP);
+    }
+
+    private void addTitle(JPanel panel, String title) {
+        JLabel label = new JLabel(title);
+        label.setForeground(new java.awt.Color(175, 181, 191));
+        label.setFont(new Font("SansSerif", Font.BOLD, 11));
+        panel.add(label);
+    }
+
+    private void addValue(JPanel panel, JLabel value, int fontSize, int bottomGap) {
         value.setForeground(java.awt.Color.WHITE);
-        value.setFont(new Font("SansSerif", Font.PLAIN, title.startsWith("CAPTURADAS") ? 19 : 18));
-        value.setBorder(BorderFactory.createEmptyBorder(3, 0, title.isEmpty() ? 7 : 12, 0));
+        value.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
+        value.setBorder(BorderFactory.createEmptyBorder(3, 0, bottomGap, 0));
         panel.add(value);
     }
 
@@ -155,6 +191,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         redoablePlies = 0;
         redo.setEnabled(false);
         board.setFlipped(false, game.getBoard());
+        showRulersIfNeeded();
         lastMoveText.setText("—");
         message.setText(" ");
         updateCapturedPieces();
@@ -191,7 +228,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         }
         Piece movingPiece = game.getBoard().getPiece(selected);
         Move move = isPromotionMove(movingPiece, pos)
-                ? new Move(selected, pos, promotionChoice())
+                ? new Move(selected, pos, promotionChoice(movingPiece.getColor()))
                 : legalMove;
         if (game.move(move)) {
             message.setText(" ");
@@ -210,16 +247,13 @@ public final class ChessWindow extends JFrame implements GameObserver {
         return !game.getBoard().isInside(to.offset(new Direction(piece.getColor().forward(), 0)));
     }
 
-    private String promotionChoice() {
-        Object[] choices = {"Reina", "Torre", "Alfil", "Caballo"};
+    /** Offers exactly the pieces the core accepts; closing the dialog takes the first (most valuable). */
+    private String promotionChoice(Color color) {
+        List<Piece> choices = promotionOptions.getPromotionChoices(color);
+        Object[] names = choices.stream().map(PieceNames::of).toArray();
         int choice = JOptionPane.showOptionDialog(this, "Elegí una pieza para promocionar", "Promoción",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
-        return switch (choice) {
-            case 1 -> "rook";
-            case 2 -> "bishop";
-            case 3 -> "knight";
-            default -> "queen";
-        };
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, names, names[0]);
+        return choices.get(Math.max(choice, 0)).getId();
     }
 
     private void select(Position pos) {
@@ -302,6 +336,20 @@ public final class ChessWindow extends JFrame implements GameObserver {
         lastMoveText.setText(lastFrom == null ? "—" : format(lastFrom) + " → " + format(lastTo));
     }
 
+    /**
+     * Big boards show their coordinates in rulers beside the board and start scrolled to
+     * the white side (bottom-left); standard boards keep them inside the squares.
+     */
+    private void showRulersIfNeeded() {
+        boolean rulers = !board.showsCoordinatesInside();
+        boardScroll.setColumnHeaderView(rulers ? fileRuler : null);
+        boardScroll.setRowHeaderView(rulers ? rankRuler : null);
+        if (boardScroll.getColumnHeader() != null) boardScroll.getColumnHeader().setBackground(boardScroll.getBackground());
+        if (boardScroll.getRowHeader() != null) boardScroll.getRowHeader().setBackground(boardScroll.getBackground());
+        boardScroll.revalidate();
+        SwingUtilities.invokeLater(() -> board.scrollRectToVisible(new Rectangle(0, board.getHeight() - 1, 1, 1)));
+    }
+
     private void refresh() {
         board.render(game.getBoard());
         turn.setText(game.getStatus().isGameOver() ? "—" : colorName(game.getCurrentTurn()));
@@ -361,8 +409,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void updateCapturedPieces() {
-        capturedByWhite.setText(capturedSymbols(captures.capturedBy(Color.WHITE)));
-        capturedByBlack.setText(capturedSymbols(captures.capturedBy(Color.BLACK)));
+        capturedByWhite.setPieces(captures.capturedBy(Color.WHITE), lastChoice.style(), lastChoice.theme());
+        capturedByBlack.setPieces(captures.capturedBy(Color.BLACK), lastChoice.style(), lastChoice.theme());
         whiteAdvantage.setText(advantageText(captures.advantageOf(Color.WHITE)));
         blackAdvantage.setText(advantageText(captures.advantageOf(Color.BLACK)));
         whiteAdvantage.setForeground(new java.awt.Color(150, 210, 130));
@@ -371,16 +419,6 @@ public final class ChessWindow extends JFrame implements GameObserver {
 
     private String advantageText(int advantage) {
         return advantage > 0 ? "+" + advantage : " ";
-    }
-
-    private String capturedSymbols(List<Piece> captures) {
-        if (captures.isEmpty()) return " ";
-        StringBuilder result = new StringBuilder("<html>");
-        for (int i = 0; i < captures.size(); i++) {
-            if (i > 0) result.append(i % 7 == 0 ? "<br>" : " ");
-            result.append(lastChoice.style().symbolFor(captures.get(i)));
-        }
-        return result.append("</html>").toString();
     }
 
     private String colorName(Color color) { return color == Color.WHITE ? "Blancas" : "Negras"; }
@@ -396,7 +434,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         };
     }
 
-    private String format(Position pos) { return "" + (char) ('a' + pos.getColumn()) + (pos.getRow() + 1); }
+    private String format(Position pos) { return SquareNotation.square(pos); }
 
     private record LastMove(Position from, Position to) { }
 }

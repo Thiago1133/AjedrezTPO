@@ -37,6 +37,8 @@ import ar.edu.uade.chess.core.status.ThreefoldRepetitionCondition;
 import javax.swing.SwingUtilities;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -48,32 +50,36 @@ import java.util.Scanner;
  */
 public class Main {
     private static final String CONSOLE_FLAG = "--consola";
-    private static final String VERSUS_COMPUTER_OPTION = "2";
+    /** Console answers to "1 o 2": looked up in a map, never compared as text. */
+    private static final Map<String, Boolean> VERSUS_COMPUTER_ANSWERS = Map.of("1", false, "2", true);
 
     public static void main(String[] args) {
-        if (Arrays.asList(args).contains(CONSOLE_FLAG)) {
-            runConsole();
-            return;
-        }
-
-        SwingUtilities.invokeLater(() -> {
-            ChessWindow window = new ChessWindow(
-                    versusComputer -> createGame(versusComputer, color -> null), previewPieces());
-            if (window.hasGame()) window.setVisible(true);
-        });
-    }
-
-    private static void runConsole() {
-        Scanner scanner = new Scanner(System.in);
-        ConsoleUI console = new ConsoleUI(scanner);
-        console.run(createGame(askVersusComputer(scanner), console));
-    }
-
-    /** Builds a game with human input supplied by the selected adapter. */
-    private static Game createGame(boolean versusComputer, MoveInput humanInput) {
+        // Pieces and promotion have no per-game state, so every game shares them.
         PieceFactory pieceFactory = new PieceFactory(List.of(
                 new PawnDefinition(), new RookDefinition(), new KnightDefinition(),
                 new BishopDefinition(), new QueenDefinition(), new KingDefinition()));
+        PromotionRule promotionRule = new PromotionRule(pieceFactory);
+
+        Runnable window = () -> SwingUtilities.invokeLater(() -> {
+            ChessWindow chessWindow = new ChessWindow(
+                    versusComputer -> createGame(pieceFactory, promotionRule, versusComputer, color -> null),
+                    previewPieces(), promotionRule);
+            if (chessWindow.hasGame()) chessWindow.setVisible(true);
+        });
+        // Launch flags are looked up like console commands; without a known flag the window opens.
+        Map<String, Runnable> launchers = Map.of(CONSOLE_FLAG, () -> runConsole(pieceFactory, promotionRule));
+        Arrays.stream(args).map(launchers::get).filter(Objects::nonNull).findFirst().orElse(window).run();
+    }
+
+    private static void runConsole(PieceFactory pieceFactory, PromotionRule promotionRule) {
+        Scanner scanner = new Scanner(System.in);
+        ConsoleUI console = new ConsoleUI(scanner, promotionRule);
+        console.run(createGame(pieceFactory, promotionRule, askVersusComputer(scanner), console));
+    }
+
+    /** Builds a game with human input supplied by the selected adapter. */
+    private static Game createGame(PieceFactory pieceFactory, PromotionRule promotionRule,
+                                   boolean versusComputer, MoveInput humanInput) {
         Board board = new Board(8, 8);
         new StandardChessSetup(pieceFactory).setup(board);
 
@@ -81,7 +87,7 @@ public class Main {
         MoveCommandFactory commandFactory = new MoveCommandFactory(List.of(
                 new CastlingRule(checkDetector),
                 new EnPassantRule(),
-                new PromotionRule(pieceFactory)));
+                promotionRule));
         MoveValidator moveValidator = new MoveValidator(checkDetector, commandFactory);
         GameStatusEvaluator statusEvaluator = new GameStatusEvaluator(checkDetector, List.of(
                 new CheckmateCondition(moveValidator, checkDetector),
@@ -110,6 +116,6 @@ public class Main {
     private static boolean askVersusComputer(Scanner scanner) {
         System.out.println("Modo de juego:\n  1) Dos jugadores\n  2) Contra la computadora (jugás con blancas)");
         System.out.print("Elegí 1 o 2 > ");
-        return scanner.hasNextLine() && scanner.nextLine().trim().equals(VERSUS_COMPUTER_OPTION);
+        return scanner.hasNextLine() && VERSUS_COMPUTER_ANSWERS.getOrDefault(scanner.nextLine().trim(), false);
     }
 }
