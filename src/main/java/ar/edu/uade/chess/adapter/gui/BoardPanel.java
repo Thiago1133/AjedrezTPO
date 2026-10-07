@@ -116,13 +116,16 @@ final class BoardPanel extends JPanel implements Scrollable {
         return getParent() instanceof JViewport viewport && viewport.getHeight() >= MIN_CELL * Math.max(1, rows);
     }
 
-    void setHighlights(Position selected, Set<Position> targets, Set<Position> captureTargets,
-                       Position lastFrom, Position lastTo) {
+    void setHighlights(Position selected, Set<Position> targets, Set<Position> captureTargets) {
         this.selected = selected;
         this.targets = Set.copyOf(targets);
         this.captureTargets = Set.copyOf(captureTargets);
-        this.lastFrom = lastFrom;
-        this.lastTo = lastTo;
+    }
+
+    /** Squares of the last move played (both null at the start of the game). */
+    void setLastMove(Position from, Position to) {
+        this.lastFrom = from;
+        this.lastTo = to;
     }
 
     void setFlipped(boolean flipped, Board currentBoard) {
@@ -160,9 +163,7 @@ final class BoardPanel extends JPanel implements Scrollable {
             square.setPiece(piece, style);
             SquareButton.TargetMark mark = SquareButton.TargetMark.NONE;
             if (targets.contains(pos)) {
-                mark = piece != null || captureTargets.contains(pos)
-                        ? SquareButton.TargetMark.CAPTURE
-                        : SquareButton.TargetMark.MOVE;
+                mark = captureTargets.contains(pos) ? SquareButton.TargetMark.CAPTURE : SquareButton.TargetMark.MOVE;
             }
             square.setTargetMark(mark, theme.marker());
         }

@@ -102,7 +102,7 @@ class AIPlayerStrategyTest {
         place(new PawnDefinition(), Color.WHITE, "h8");
         List<Move> legal = List.of(move("d8", "d1"), move("d8", "h8"), move("d8", "d5"));
 
-        Move chosen = ai().chooseMove(new FakeChessGame(board, legal), Color.BLACK);
+        Move chosen = ai().chooseMove(new FakeGameQueries(board, legal), Color.BLACK);
 
         assertEquals(move("d8", "d1"), chosen);
     }
@@ -113,14 +113,14 @@ class AIPlayerStrategyTest {
         place(new PawnDefinition(), Color.WHITE, "e3");
         List<Move> legal = List.of(move("d8", "d4"), move("d8", "d6"));
 
-        Move chosen = ai().chooseMove(new FakeChessGame(board, legal), Color.BLACK);
+        Move chosen = ai().chooseMove(new FakeGameQueries(board, legal), Color.BLACK);
 
         assertEquals(move("d8", "d6"), chosen);
     }
 
     @Test
     void ai_withNoLegalMoves_returnsNull() {
-        assertNull(ai().chooseMove(new FakeChessGame(board, List.of()), Color.BLACK));
+        assertNull(ai().chooseMove(new FakeGameQueries(board, List.of()), Color.BLACK));
     }
 
     @Test
@@ -133,7 +133,7 @@ class AIPlayerStrategyTest {
 
         for (int seed = 0; seed < 10; seed++) {
             Move chosen = new AIPlayerStrategy(evaluator, new Random(seed))
-                    .chooseMove(new FakeChessGame(board, legal), Color.BLACK);
+                    .chooseMove(new FakeGameQueries(board, legal), Color.BLACK);
             assertTrue(legal.contains(chosen));
         }
     }

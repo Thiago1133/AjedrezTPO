@@ -2,7 +2,7 @@ package ar.edu.uade.chess.core.game;
 
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
-import ar.edu.uade.chess.core.port.ChessGame;
+import ar.edu.uade.chess.core.port.in.GameQueries;
 
 public class Player {
     private final Color color;
@@ -17,7 +17,11 @@ public class Player {
         return color;
     }
 
-    public Move chooseMove(ChessGame game) {
+    public boolean isAutomatic() {
+        return strategy.isAutomatic();
+    }
+
+    public Move chooseMove(GameQueries game) {
         return strategy.chooseMove(game, color);
     }
 }

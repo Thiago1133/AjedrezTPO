@@ -6,8 +6,9 @@ import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.command.MoveCommand;
 import ar.edu.uade.chess.core.command.MoveCommandFactory;
 import ar.edu.uade.chess.core.command.MoveHistory;
-import ar.edu.uade.chess.core.port.ChessGame;
-import ar.edu.uade.chess.core.port.GameObserver;
+import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.port.in.ChessGame;
+import ar.edu.uade.chess.core.port.out.GameObserver;
 import ar.edu.uade.chess.core.rules.MoveValidator;
 import ar.edu.uade.chess.core.status.GameStatusEvaluator;
 
@@ -69,29 +70,65 @@ public class Game implements ChessGame {
         return true;
     }
 
+    /**
+     * Takes back the last move, and keeps going while the player to move is automatic:
+     * against the computer one undo takes back its reply and the human's move, so the
+     * human is to move again. Between two humans it takes back exactly one move.
+     */
     @Override
     public void undo() {
-        MoveCommand command = history.popForUndo();
-        if (command == null) {
+        if (!undoOneMove()) {
             return;
         }
-        command.undo(board);
-        turnManager.previous();
+        while (turnManager.getCurrentPlayer().isAutomatic() && history.canUndo()) {
+            undoOneMove();
+        }
         updateStatus();
         notifyTurn();
     }
 
+    private boolean undoOneMove() {
+        MoveCommand command = history.popForUndo();
+        if (command == null) {
+            return false;
+        }
+        command.undo(board);
+        turnManager.previous();
+        return true;
+    }
+
+    /** Replays what undo took back, again until a human is to move. */
     @Override
     public void redo() {
+        if (!redoOneMove()) {
+            return;
+        }
+        while (turnManager.getCurrentPlayer().isAutomatic() && history.canRedo()) {
+            redoOneMove();
+        }
+        updateStatus();
+        notifyTurn();
+    }
+
+    private boolean redoOneMove() {
         MoveCommand command = history.popForRedo();
         if (command == null) {
-            return;
+            return false;
         }
         command.execute(board);
         turnManager.next();
         notifyMove(command.getMove());
-        updateStatus();
-        notifyTurn();
+        return true;
+    }
+
+    @Override
+    public boolean canUndo() {
+        return history.canUndo();
+    }
+
+    @Override
+    public boolean canRedo() {
+        return history.canRedo();
     }
 
     @Override
@@ -110,6 +147,52 @@ public class Game implements ChessGame {
             return List.of();
         }
         return moveValidator.getLegalMoves(board, history, turnManager.getCurrentColor());
+    }
+
+    @Override
+    public boolean isCapture(Move move) {
+        MoveCommand preview = preview(move);
+        return preview != null && preview.getCapturedPiece() != null;
+    }
+
+    @Override
+    public boolean isPromotion(Move move) {
+        MoveCommand preview = preview(move);
+        return preview != null && preview.isPromotion();
+    }
+
+    @Override
+    public Move getLastMove() {
+        return history.getLastMove();
+    }
+
+    @Override
+    public List<Piece> getCapturedPieces(Color capturer) {
+        return history.getCapturedPiecesOf(capturer.opposite());
+    }
+
+    @Override
+    public int getMaterialAdvantage(Color color) {
+        return Math.max(0, capturedValue(color) - capturedValue(color.opposite()));
+    }
+
+    private int capturedValue(Color capturer) {
+        return getCapturedPieces(capturer).stream().mapToInt(Piece::getValue).sum();
+    }
+
+    /**
+     * Plays the move on a copy of the board and returns the executed command, so the
+     * answer comes from the real rules while the game itself does not change. Null if illegal.
+     */
+    private MoveCommand preview(Move move) {
+        Color color = turnManager.getCurrentColor();
+        if (status.isGameOver() || !moveValidator.isLegal(board, move, history, color)) {
+            return null;
+        }
+        Board copy = board.copy();
+        MoveCommand command = commandFactory.create(copy, move, history);
+        command.execute(copy);
+        return command;
     }
 
     @Override

@@ -4,13 +4,13 @@ target/
 # IntelliJ
 .idea/
 *.iml
-out/
+/out/
 
 # Eclipse
 .classpath
 .project
 .settings/
-bin/
+/bin/
 
 # VS Code
 .vscode/

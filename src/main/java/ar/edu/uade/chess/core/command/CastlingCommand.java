@@ -2,6 +2,7 @@ package ar.edu.uade.chess.core.command;
 
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Move;
+import ar.edu.uade.chess.core.piece.Piece;
 
 /** Castling: the king and the rook move in a single turn. */
 public class CastlingCommand implements MoveCommand {
@@ -38,5 +39,11 @@ public class CastlingCommand implements MoveCommand {
     @Override
     public boolean isIrreversible() {
         return true;
+    }
+
+    /** Castling never captures. */
+    @Override
+    public Piece getCapturedPiece() {
+        return null;
     }
 }

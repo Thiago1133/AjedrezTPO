@@ -11,7 +11,7 @@ import ar.edu.uade.chess.core.command.PromotionCommand;
 import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.PieceTrait;
-import ar.edu.uade.chess.core.port.PromotionOptions;
+import ar.edu.uade.chess.core.port.in.PromotionOptions;
 
 import java.util.Comparator;
 import java.util.List;

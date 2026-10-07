@@ -28,14 +28,16 @@ final class PiecePainter {
             double dx = x + (width - bounds.getWidth()) / 2 - bounds.getX();
             double dy = y + (height - bounds.getHeight()) / 2 - bounds.getY();
             Shape shape = AffineTransform.getTranslateInstance(dx, dy).createTransformedShape(outline);
-            g.setColor(style.fillFor(piece));
-            g.fill(shape);
+            // Outline first, fill on top: the outline only shows outside the symbol, so even a
+            // thick one never covers the inside of a white piece.
             if (style.outlineFor(piece) != null) {
                 g.setColor(style.outlineFor(piece));
-                float strokeWidth = style instanceof SolidPieceStyle ? fontSize / 20f : fontSize / 28f;
-                g.setStroke(new BasicStroke(Math.max(1f, strokeWidth)));
+                g.setStroke(new BasicStroke(Math.max(1f, style.outlineWidth(fontSize)),
+                        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g.draw(shape);
             }
+            g.setColor(style.fillFor(piece));
+            g.fill(shape);
         } finally {
             g.dispose();
         }

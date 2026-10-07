@@ -2,7 +2,7 @@ package ar.edu.uade.chess.adapter;
 
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.piece.Piece;
-import ar.edu.uade.chess.core.port.PromotionOptions;
+import ar.edu.uade.chess.core.port.in.PromotionOptions;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

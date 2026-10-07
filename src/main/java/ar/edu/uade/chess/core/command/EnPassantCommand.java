@@ -38,4 +38,9 @@ public class EnPassantCommand implements MoveCommand {
     public boolean isIrreversible() {
         return true;
     }
+
+    @Override
+    public Piece getCapturedPiece() {
+        return capturedPiece;
+    }
 }
