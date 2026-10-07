@@ -12,11 +12,6 @@ import java.util.function.Consumer;
 
 /** Visual board sized from the core's dimensions; it does not validate or execute chess rules. */
 final class BoardPanel extends JPanel {
-    private static final java.awt.Color LIGHT = new java.awt.Color(238, 238, 210);
-    private static final java.awt.Color DARK = new java.awt.Color(118, 150, 86);
-    private static final java.awt.Color SELECTED = new java.awt.Color(246, 246, 105);
-    private static final java.awt.Color LAST_MOVE = new java.awt.Color(190, 210, 90);
-    private static final java.awt.Color CAPTURE_BORDER = new java.awt.Color(65, 73, 58);
     /** Preferred length of the board's longest side; cells and glyphs shrink to fit it. */
     private static final int PREFERRED_SIDE = 640;
     private static final int STANDARD_SIZE = 8;
@@ -29,9 +24,13 @@ final class BoardPanel extends JPanel {
     private Set<Position> targets = Set.of();
     private Set<Position> captureTargets = Set.of();
     private boolean flipped;
+    private PieceStyle style;
+    private BoardTheme theme;
 
-    BoardPanel(Consumer<Position> onClick) {
+    BoardPanel(Consumer<Position> onClick, PieceStyle style, BoardTheme theme) {
         this.onClick = onClick;
+        this.style = style;
+        this.theme = theme;
         setPreferredSize(new java.awt.Dimension(PREFERRED_SIDE, PREFERRED_SIDE));
     }
 
@@ -66,6 +65,12 @@ final class BoardPanel extends JPanel {
 
     boolean isFlipped() { return flipped; }
 
+    /** Takes effect on the next render. */
+    void setAppearance(PieceStyle style, BoardTheme theme) {
+        this.style = style;
+        this.theme = theme;
+    }
+
     void render(Board board) {
         rebuildIfResized(board);
         for (int r = 0; r < rows; r++) for (int c = 0; c < columns; c++) {
@@ -74,34 +79,24 @@ final class BoardPanel extends JPanel {
             // Reset the prior square state first so selection markers never linger.
             square.setText("");
             square.setBorderPainted(false);
-            square.usePieceFont();
-            java.awt.Color bg = (pos.getRow() + pos.getColumn()) % 2 == 0 ? LIGHT : DARK;
-            if (pos.equals(lastFrom) || pos.equals(lastTo)) bg = LAST_MOVE;
-            if (pos.equals(selected)) bg = SELECTED;
+            boolean lightSquare = (pos.getRow() + pos.getColumn()) % 2 == 0;
+            java.awt.Color bg = theme.squareColor(lightSquare);
+            if (pos.equals(lastFrom) || pos.equals(lastTo)) bg = theme.lastMove();
+            if (pos.equals(selected)) bg = theme.selected();
             square.setBackground(bg);
             square.setCoordinates(r == rows - 1 ? String.valueOf((char) ('a' + pos.getColumn())) : null,
                     c == 0 ? String.valueOf(pos.getRow() + 1) : null,
-                    (pos.getRow() + pos.getColumn()) % 2 == 0);
+                    theme.coordinateColor(lightSquare));
 
             Piece piece = board.getPiece(pos);
+            square.setPiece(piece, style);
             boolean target = targets.contains(pos);
-            if (piece != null) {
-                square.setText(PieceGlyphs.of(piece));
-                // Unicode glyphs already distinguish piece colors; a dark ink stays legible on both square colors.
-                square.setForeground(new java.awt.Color(35, 38, 35));
-                if (target || captureTargets.contains(pos)) {
-                    square.setBorder(BorderFactory.createLineBorder(CAPTURE_BORDER, 4));
-                    square.setBorderPainted(true);
-                }
+            if (target && (piece != null || captureTargets.contains(pos))) {
+                square.setBorder(BorderFactory.createLineBorder(theme.marker(), 4));
+                square.setBorderPainted(true);
             } else if (target) {
-                if (captureTargets.contains(pos)) {
-                    square.setBorder(BorderFactory.createLineBorder(CAPTURE_BORDER, 4));
-                    square.setBorderPainted(true);
-                } else {
-                    square.setText("•");
-                    square.useMarkerFont();
-                    square.setForeground(new java.awt.Color(75, 82, 68));
-                }
+                square.setText("•");
+                square.setForeground(theme.marker());
             }
         }
     }

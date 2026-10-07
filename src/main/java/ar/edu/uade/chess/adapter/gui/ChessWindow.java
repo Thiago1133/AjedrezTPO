@@ -22,21 +22,22 @@ import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.util.ArrayList;
 import java.util.ArrayDeque;
-import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
 /** Swing adapter: translates clicks into moves and displays core state. */
 public final class ChessWindow extends JFrame implements GameObserver {
     private final Function<Boolean, ChessGame> gameFactory;
-    private final BoardPanel board = new BoardPanel(this::squareClicked);
+    private final List<Piece> previewPieces;
+    /** Last options chosen; offered again when the next game starts (only while the window is open). */
+    private NewGameDialog.NewGameChoice lastChoice = new NewGameDialog.NewGameChoice(false,
+            AppearanceCatalog.pieceStyles().get(0), AppearanceCatalog.boardThemes().get(0));
+    private final BoardPanel board = new BoardPanel(this::squareClicked, lastChoice.style(), lastChoice.theme());
     private final JLabel turn = new JLabel();
     private final JLabel status = new JLabel();
     private final JLabel capturedByWhite = new JLabel(" ");
@@ -47,20 +48,22 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private final JLabel message = new JLabel(" ");
     private final JButton restart = new JButton("Nueva partida");
     private final JButton undo = new JButton("Deshacer jugada");
+    private final JButton redo = new JButton("Rehacer jugada");
     private final JButton rotate = new JButton("Girar tablero");
-    private final List<Piece> whiteCaptures = new ArrayList<>();
-    private final List<Piece> blackCaptures = new ArrayList<>();
-    private final Deque<UiMoveState> uiMoveHistory = new ArrayDeque<>();
+    private final Deque<LastMove> uiMoveHistory = new ArrayDeque<>();
     private ChessGame game;
-    private Board boardBeforeLastMove;
+    private CapturedPiecesTracker captures;
     private Position selected, lastFrom, lastTo;
     private Color checkedColor;
     private boolean versusComputer;
     private boolean handlingGameOver;
+    /** Moves undone that can still be redone; a new move discards them, as in the core. */
+    private int redoablePlies;
 
-    public ChessWindow(Function<Boolean, ChessGame> gameFactory) {
+    public ChessWindow(Function<Boolean, ChessGame> gameFactory, List<Piece> previewPieces) {
         super("Ajedrez");
         this.gameFactory = gameFactory;
+        this.previewPieces = List.copyOf(previewPieces);
         buildLayout();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(850, 650));
@@ -106,6 +109,10 @@ public final class ChessWindow extends JFrame implements GameObserver {
         undo.setEnabled(false);
         undo.addActionListener(e -> undoLastMove());
         sidebar.add(undo);
+        redo.setAlignmentX(LEFT_ALIGNMENT);
+        redo.setEnabled(false);
+        redo.addActionListener(e -> redoLastMove());
+        sidebar.add(redo);
         rotate.setAlignmentX(LEFT_ALIGNMENT);
         rotate.addActionListener(e -> board.setFlipped(!board.isFlipped(), game.getBoard()));
         sidebar.add(rotate);
@@ -131,22 +138,22 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void startNewGame() {
-        Object[] modes = {"Dos jugadores", "Contra la computadora"};
-        int mode = JOptionPane.showOptionDialog(this, "Elegí el modo de juego", "Nueva partida",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, modes, modes[0]);
-        if (mode != 0 && mode != 1) return;
+        Optional<NewGameDialog.NewGameChoice> choice = NewGameDialog.ask(this, lastChoice, previewPieces);
+        if (choice.isEmpty()) return;
+        lastChoice = choice.get();
 
         if (game != null) game.removeObserver(this);
-        versusComputer = mode == 1;
+        versusComputer = lastChoice.versusComputer();
+        board.setAppearance(lastChoice.style(), lastChoice.theme());
         game = gameFactory.apply(versusComputer);
         game.addObserver(this);
-        boardBeforeLastMove = game.getBoard();
+        captures = new CapturedPiecesTracker(game.getBoard());
         selected = lastFrom = lastTo = null;
         checkedColor = null;
-        whiteCaptures.clear();
-        blackCaptures.clear();
         uiMoveHistory.clear();
         undo.setEnabled(false);
+        redoablePlies = 0;
+        redo.setEnabled(false);
         board.setFlipped(false, game.getBoard());
         lastMoveText.setText("—");
         message.setText(" ");
@@ -188,6 +195,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
                 : legalMove;
         if (game.move(move)) {
             message.setText(" ");
+            redoablePlies = 0;
+            redo.setEnabled(false);
             if (versusComputer && !game.getStatus().isGameOver()) game.playTurn();
         } else {
             message.setText("Movimiento inválido");
@@ -252,25 +261,44 @@ public final class ChessWindow extends JFrame implements GameObserver {
             Color before = game.getCurrentTurn();
             game.undo();
             if (game.getCurrentTurn() == before) break;
-            if (!uiMoveHistory.isEmpty()) restoreUiState(uiMoveHistory.pop());
+            captures.undoLastMove();
+            redoablePlies++;
+            if (!uiMoveHistory.isEmpty()) restoreLastMove(uiMoveHistory.pop());
             if (!versusComputer || game.getCurrentTurn() == Color.WHITE) break;
         }
         selected = null;
         message.setText(" ");
         board.setHighlights(null, Set.of(), Set.of(), lastFrom, lastTo);
-        boardBeforeLastMove = game.getBoard();
         updateCapturedPieces();
         undo.setEnabled(!uiMoveHistory.isEmpty());
+        redo.setEnabled(redoablePlies > 0);
         refresh();
     }
 
-    private void restoreUiState(UiMoveState previous) {
-        whiteCaptures.clear();
-        whiteCaptures.addAll(previous.whiteCaptures());
-        blackCaptures.clear();
-        blackCaptures.addAll(previous.blackCaptures());
-        lastFrom = previous.lastFrom();
-        lastTo = previous.lastTo();
+    /**
+     * Redoes what undoLastMove took back. Game.redo notifies onMoveExecuted like a normal
+     * move, so captures and the last-move highlight are recorded again there.
+     */
+    private void redoLastMove() {
+        if (redoablePlies == 0) return;
+        int maxRedos = versusComputer ? 2 : 1;
+        for (int i = 0; i < maxRedos && redoablePlies > 0; i++) {
+            Color before = game.getCurrentTurn();
+            game.redo();
+            if (game.getCurrentTurn() == before) break;
+            redoablePlies--;
+            if (!versusComputer || game.getCurrentTurn() == Color.WHITE) break;
+        }
+        selected = null;
+        message.setText(" ");
+        board.setHighlights(null, Set.of(), Set.of(), lastFrom, lastTo);
+        redo.setEnabled(redoablePlies > 0);
+        refresh();
+    }
+
+    private void restoreLastMove(LastMove previous) {
+        lastFrom = previous.from();
+        lastTo = previous.to();
         lastMoveText.setText(lastFrom == null ? "—" : format(lastFrom) + " → " + format(lastTo));
     }
 
@@ -284,12 +312,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     @Override public void onMoveExecuted(Move move) {
-        Board after = game.getBoard();
-        uiMoveHistory.push(new UiMoveState(List.copyOf(whiteCaptures), List.copyOf(blackCaptures), lastFrom, lastTo));
-        Color capturer = game.getCurrentTurn().opposite();
-        List<Piece> captureList = capturer == Color.WHITE ? whiteCaptures : blackCaptures;
-        recordCapturedPieces(boardBeforeLastMove, after, game.getCurrentTurn(), captureList);
-        boardBeforeLastMove = after;
+        uiMoveHistory.push(new LastMove(lastFrom, lastTo));
+        captures.recordMove(game.getBoard(), game.getCurrentTurn().opposite());
         lastFrom = move.getFrom();
         lastTo = move.getTo();
         lastMoveText.setText(format(lastFrom) + " → " + format(lastTo));
@@ -336,45 +360,17 @@ public final class ChessWindow extends JFrame implements GameObserver {
         };
     }
 
-    private void recordCapturedPieces(Board before, Board after, Color victimColor, List<Piece> captures) {
-        Map<String, Integer> beforeCounts = countPieces(before, victimColor);
-        Map<String, Integer> afterCounts = countPieces(after, victimColor);
-        Map<String, Integer> losses = new HashMap<>();
-        beforeCounts.forEach((id, count) -> {
-            int lost = count - afterCounts.getOrDefault(id, 0);
-            if (lost > 0) losses.put(id, lost);
-        });
-        for (Position pos : before.getPositionsOf(victimColor)) {
-            Piece piece = before.getPiece(pos);
-            int lost = losses.getOrDefault(piece.getId(), 0);
-            if (lost > 0) {
-                captures.add(piece.copy());
-                losses.put(piece.getId(), lost - 1);
-            }
-        }
-    }
-
-    private Map<String, Integer> countPieces(Board board, Color color) {
-        Map<String, Integer> counts = new HashMap<>();
-        for (Position pos : board.getPositionsOf(color)) {
-            String id = board.getPiece(pos).getId();
-            counts.merge(id, 1, Integer::sum);
-        }
-        return counts;
-    }
-
     private void updateCapturedPieces() {
-        Comparator<Piece> order = Comparator.<Piece>comparingInt(Piece::getValue).reversed()
-                .thenComparing(Piece::getSymbol);
-        whiteCaptures.sort(order);
-        blackCaptures.sort(order);
-        capturedByWhite.setText(capturedSymbols(whiteCaptures));
-        capturedByBlack.setText(capturedSymbols(blackCaptures));
-        int difference = capturedValue(whiteCaptures) - capturedValue(blackCaptures);
-        whiteAdvantage.setText(difference > 0 ? "+" + difference : " ");
-        blackAdvantage.setText(difference < 0 ? "+" + -difference : " ");
+        capturedByWhite.setText(capturedSymbols(captures.capturedBy(Color.WHITE)));
+        capturedByBlack.setText(capturedSymbols(captures.capturedBy(Color.BLACK)));
+        whiteAdvantage.setText(advantageText(captures.advantageOf(Color.WHITE)));
+        blackAdvantage.setText(advantageText(captures.advantageOf(Color.BLACK)));
         whiteAdvantage.setForeground(new java.awt.Color(150, 210, 130));
         blackAdvantage.setForeground(new java.awt.Color(150, 210, 130));
+    }
+
+    private String advantageText(int advantage) {
+        return advantage > 0 ? "+" + advantage : " ";
     }
 
     private String capturedSymbols(List<Piece> captures) {
@@ -382,13 +378,9 @@ public final class ChessWindow extends JFrame implements GameObserver {
         StringBuilder result = new StringBuilder("<html>");
         for (int i = 0; i < captures.size(); i++) {
             if (i > 0) result.append(i % 7 == 0 ? "<br>" : " ");
-            result.append(PieceGlyphs.of(captures.get(i)));
+            result.append(lastChoice.style().symbolFor(captures.get(i)));
         }
         return result.append("</html>").toString();
-    }
-
-    private int capturedValue(List<Piece> captures) {
-        return captures.stream().mapToInt(Piece::getValue).sum();
     }
 
     private String colorName(Color color) { return color == Color.WHITE ? "Blancas" : "Negras"; }
@@ -406,6 +398,5 @@ public final class ChessWindow extends JFrame implements GameObserver {
 
     private String format(Position pos) { return "" + (char) ('a' + pos.getColumn()) + (pos.getRow() + 1); }
 
-    private record UiMoveState(List<Piece> whiteCaptures, List<Piece> blackCaptures,
-                               Position lastFrom, Position lastTo) { }
+    private record LastMove(Position from, Position to) { }
 }

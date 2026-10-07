@@ -16,6 +16,7 @@ import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
 import ar.edu.uade.chess.core.piece.PawnDefinition;
+import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
@@ -39,7 +40,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-/** Composition root for the console and Swing adapters. */
+/**
+ * Composition root: the only place where concrete classes are instantiated and wired
+ * together (dependency injection by hand), for both adapters (Swing window and console).
+ * Extending the game (a new piece, rule or board size) means changing the wiring here,
+ * not the core classes.
+ */
 public class Main {
     private static final String CONSOLE_FLAG = "--consola";
     private static final String VERSUS_COMPUTER_OPTION = "2";
@@ -52,7 +58,7 @@ public class Main {
 
         SwingUtilities.invokeLater(() -> {
             ChessWindow window = new ChessWindow(
-                    versusComputer -> createGame(versusComputer, color -> null));
+                    versusComputer -> createGame(versusComputer, color -> null), previewPieces());
             if (window.hasGame()) window.setVisible(true);
         });
     }
@@ -92,6 +98,12 @@ public class Main {
                 new Player(Color.BLACK, blackStrategy));
 
         return new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory());
+    }
+
+    /** Pieces shown in the new-game dialog to preview each piece style and board theme. */
+    private static List<Piece> previewPieces() {
+        return List.of(new KingDefinition().create(Color.WHITE), new QueenDefinition().create(Color.BLACK),
+                new KnightDefinition().create(Color.WHITE), new PawnDefinition().create(Color.BLACK));
     }
 
     /** The computer plays black when the console user picks option 2. */
