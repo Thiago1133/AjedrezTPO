@@ -1,19 +1,22 @@
 package ar.edu.uade.chess.core.game;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.port.in.GameQueries;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * Computer player: scores every legal move with the injected evaluator and plays
  * the best one, breaking ties at random (Random is injected so tests are repeatable).
  */
 public class AIPlayerStrategy implements PlayerStrategy {
+    private static final int MIN_DELAY_MS = 2_000;
+    private static final int MAX_DELAY_MS = 5_000;
     private final MoveEvaluationStrategy evaluator;
     private final Random random;
 
@@ -29,6 +32,13 @@ public class AIPlayerStrategy implements PlayerStrategy {
 
     @Override
     public Move chooseMove(GameQueries game, Color color) {
+        int delay = ThreadLocalRandom.current().nextInt(MIN_DELAY_MS, MAX_DELAY_MS + 1);
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
         List<Move> legalMoves = game.getLegalMoves();
         if (legalMoves.isEmpty()) {
             return null;
