@@ -21,6 +21,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -36,6 +38,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private static final int VALUE_FONT_SIZE = 18;
     private static final int SECTION_GAP = 12;
     private static final int ADVANTAGE_GAP = 7;
+    private static final int INITIAL_TIME_SECONDS = 10 * 60;
     private final Function<Boolean, ChessGame> gameFactory;
     private final List<Piece> previewPieces;
     private final PromotionOptions promotionOptions;
@@ -48,10 +51,14 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private final CoordinateRuler rankRuler = new CoordinateRuler(board, CoordinateRuler.Axis.RANKS);
     private final JLabel turn = new JLabel();
     private final JLabel status = new JLabel();
+    private final JLabel whiteClock = new JLabel("10:00");
+    private JLabel whiteClockTitle;
     private final CapturedPiecesView capturedByWhite = new CapturedPiecesView();
     private final JLabel whiteAdvantage = new JLabel(" ");
     private final CapturedPiecesView capturedByBlack = new CapturedPiecesView();
     private final JLabel blackAdvantage = new JLabel(" ");
+    private final JLabel blackClock = new JLabel("10:00");
+    private JLabel blackClockTitle;
     private final JLabel lastMoveText = new JLabel("—");
     private final JLabel message = new JLabel(" ");
     private final JButton restart = new JButton("Nueva partida");
@@ -63,6 +70,14 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private Color checkedColor;
     private boolean versusComputer;
     private boolean handlingGameOver;
+    private SwingWorker<Boolean, Void> aiMoveWorker;
+    private boolean aiMovePending;
+    private final Timer chessClock = new Timer(1000, e -> tickClock());
+    private int whiteTimeSeconds = INITIAL_TIME_SECONDS;
+    private int blackTimeSeconds = INITIAL_TIME_SECONDS;
+    private Color runningClock;
+    private boolean clockStarted;
+    private boolean timeExpired;
 
     public ChessWindow(Function<Boolean, ChessGame> gameFactory, List<Piece> previewPieces,
                        PromotionOptions promotionOptions) {
@@ -110,6 +125,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         addInfo(sidebar, "TURNO", turn);
         addInfo(sidebar, "ESTADO", status);
+        whiteClockTitle = addTitle(sidebar, "TIEMPO BLANCAS");
+        addValue(sidebar, whiteClock, VALUE_FONT_SIZE, SECTION_GAP);
         addTitle(sidebar, "CAPTURADAS POR BLANCAS");
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(capturedByWhite);
@@ -118,6 +135,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(capturedByBlack);
         addValue(sidebar, blackAdvantage, VALUE_FONT_SIZE, ADVANTAGE_GAP);
+        blackClockTitle = addTitle(sidebar, "TIEMPO NEGRAS");
+        addValue(sidebar, blackClock, VALUE_FONT_SIZE, SECTION_GAP);
         addInfo(sidebar, "ÚLTIMA JUGADA", lastMoveText);
         message.setForeground(new java.awt.Color(235, 201, 92));
         message.setBorder(BorderFactory.createEmptyBorder(4, 0, 12, 0));
@@ -153,11 +172,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
         addValue(panel, value, VALUE_FONT_SIZE, SECTION_GAP);
     }
 
-    private void addTitle(JPanel panel, String title) {
+    private JLabel addTitle(JPanel panel, String title) {
         JLabel label = new JLabel(title);
         label.setForeground(new java.awt.Color(175, 181, 191));
         label.setFont(new Font("SansSerif", Font.BOLD, 11));
         panel.add(label);
+        return label;
     }
 
     private void addValue(JPanel panel, JLabel value, int fontSize, int bottomGap) {
@@ -168,9 +188,23 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void startNewGame() {
+        cancelPendingAiMove();
         Optional<NewGameDialog.NewGameChoice> choice = NewGameDialog.ask(this, lastChoice, previewPieces);
-        if (choice.isEmpty()) return;
+        if (choice.isEmpty()) {
+            if (versusComputer && game != null && !game.getStatus().isGameOver()
+                    && game.getCurrentTurn() == Color.BLACK) scheduleAiMove();
+            return;
+        }
         lastChoice = choice.get();
+
+        chessClock.stop();
+        runningClock = null;
+        clockStarted = false;
+        timeExpired = false;
+        whiteTimeSeconds = INITIAL_TIME_SECONDS;
+        blackTimeSeconds = INITIAL_TIME_SECONDS;
+        updateClockLabels();
+        setClockVisibility(!lastChoice.versusComputer());
 
         if (game != null) game.removeObserver(this);
         versusComputer = lastChoice.versusComputer();
@@ -190,7 +224,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void squareClicked(Position pos) {
-        if (game.getStatus().isGameOver()) return;
+        if (timeExpired || aiMovePending || game.getStatus().isGameOver()) return;
         Piece piece = game.getBoard().getPiece(pos);
         if (selected == null) {
             if (piece != null && piece.getColor() == game.getCurrentTurn()) select(pos);
@@ -216,9 +250,13 @@ public final class ChessWindow extends JFrame implements GameObserver {
         Move move = game.isPromotion(legalMove)
                 ? new Move(selected, pos, promotionChoice(game.getCurrentTurn()))
                 : legalMove;
+        if (timeExpired) {
+            clearSelection();
+            return;
+        }
         if (game.move(move)) {
             message.setText(" ");
-            if (versusComputer && !game.getStatus().isGameOver()) game.playTurn();
+            if (versusComputer && !game.getStatus().isGameOver()) scheduleAiMove();
         } else {
             message.setText("Movimiento inválido");
         }
@@ -258,13 +296,43 @@ public final class ChessWindow extends JFrame implements GameObserver {
 
     /** The core takes back the computer's reply too, so the human is always to move afterwards. */
     private void undoLastMove() {
+        cancelPendingAiMove();
         game.undo();
         afterUndoOrRedo();
     }
 
     private void redoLastMove() {
+        cancelPendingAiMove();
         game.redo();
         afterUndoOrRedo();
+    }
+
+    private void scheduleAiMove() {
+        if (aiMovePending) return;
+        aiMovePending = true;
+        ChessGame scheduledGame = game;
+        aiMoveWorker = new SwingWorker<>() {
+            @Override
+            protected Boolean doInBackground() {
+                return scheduledGame.playTurn();
+            }
+
+            @Override
+            protected void done() {
+                if (aiMoveWorker == this) aiMoveWorker = null;
+                aiMovePending = false;
+                if (game == scheduledGame) refresh();
+            }
+        };
+        aiMoveWorker.execute();
+    }
+
+    private void cancelPendingAiMove() {
+        if (aiMoveWorker != null) {
+            aiMoveWorker.cancel(true);
+            aiMoveWorker = null;
+        }
+        aiMovePending = false;
     }
 
     private void afterUndoOrRedo() {
@@ -292,8 +360,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private void refresh() {
         showLastMove();
         updateCapturedPieces();
-        undo.setEnabled(game.canUndo());
-        redo.setEnabled(game.canRedo());
+        undo.setEnabled(!timeExpired && !aiMovePending && game.canUndo());
+        redo.setEnabled(!timeExpired && !aiMovePending && game.canRedo());
         board.render(game.getBoard());
         turn.setText(game.getStatus().isGameOver() ? "—" : colorName(game.getCurrentTurn()));
         if (game.getStatus() != GameStatus.CHECK) checkedColor = null;
@@ -303,19 +371,47 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     /** The turn change that follows every move refreshes the whole window. */
-    @Override public void onMoveExecuted(Move move) { }
+    @Override public void onMoveExecuted(Move move) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> onMoveExecuted(move));
+            return;
+        }
+        if (versusComputer || timeExpired) return;
+        if (!clockStarted) {
+            // Game begins with White, so the first accepted move starts Black's clock.
+            if (game.getCurrentTurn() == Color.BLACK) clockStarted = true;
+        }
+        if (clockStarted) runClockFor(game.getCurrentTurn());
+    }
 
-    @Override public void onTurnChanged(Color color) { refresh(); }
+    @Override public void onTurnChanged(Color color) {
+        Runnable update = () -> {
+            if (!versusComputer && clockStarted && !timeExpired) runClockFor(color);
+            refresh();
+        };
+        if (SwingUtilities.isEventDispatchThread()) update.run();
+        else SwingUtilities.invokeLater(update);
+    }
 
     @Override public void onCheck(Color color) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> onCheck(color));
+            return;
+        }
         checkedColor = color;
         status.setText("Jaque a " + colorName(color).toLowerCase());
         message.setText("¡Jaque a " + colorName(color).toLowerCase() + "!");
     }
 
     @Override public void onGameOver(GameStatus result) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> onGameOver(result));
+            return;
+        }
         if (handlingGameOver) return;
         handlingGameOver = true;
+        chessClock.stop();
+        runningClock = null;
         refresh();
         status.setText("Finalizada");
         message.setText(" ");
@@ -342,6 +438,65 @@ public final class ChessWindow extends JFrame implements GameObserver {
             case DRAW -> "Tablas";
             default -> "Partida finalizada";
         };
+    }
+
+    private void setClockVisibility(boolean visible) {
+        whiteClockTitle.setVisible(visible);
+        whiteClock.setVisible(visible);
+        blackClockTitle.setVisible(visible);
+        blackClock.setVisible(visible);
+    }
+
+    private void runClockFor(Color color) {
+        if (runningClock == color && chessClock.isRunning()) return;
+        runningClock = color;
+        chessClock.restart();
+    }
+
+    private void tickClock() {
+        if (versusComputer || !clockStarted || timeExpired || runningClock == null) {
+            chessClock.stop();
+            return;
+        }
+        if (runningClock == Color.WHITE) whiteTimeSeconds--;
+        else blackTimeSeconds--;
+        updateClockLabels();
+        int remaining = runningClock == Color.WHITE ? whiteTimeSeconds : blackTimeSeconds;
+        if (remaining <= 0) expireClock(runningClock);
+    }
+
+    private void updateClockLabels() {
+        whiteClock.setText(clockText(whiteTimeSeconds));
+        blackClock.setText(clockText(blackTimeSeconds));
+    }
+
+    private String clockText(int seconds) {
+        return String.format("%02d:%02d", Math.max(0, seconds) / 60, Math.max(0, seconds) % 60);
+    }
+
+    private void expireClock(Color loser) {
+        chessClock.stop();
+        runningClock = null;
+        timeExpired = true;
+        handlingGameOver = true;
+        selected = null;
+        board.setHighlights(null, Set.of(), Set.of());
+        refresh();
+        status.setText("Finalizada");
+        message.setText(" ");
+        try {
+            JOptionPane.showMessageDialog(this,
+                    colorName(loser.opposite()) + " ganan por tiempo", "Fin de la partida",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } finally {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    startNewGame();
+                } finally {
+                    handlingGameOver = false;
+                }
+            });
+        }
     }
 
     private void showLastMove() {
