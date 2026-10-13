@@ -13,8 +13,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Captured pieces, material advantage and the last move come from the core's own history
- * (each move command remembers what it took), so every adapter shows the same thing.
+ * Captured pieces and the last move come from the core's history; material advantage is
+ * derived from the current board so captures and promotions are both reflected.
  */
 class CapturesAndLastMoveTest {
     private final PieceFactory pieceFactory = FullGameWiring.standardPieces();
@@ -52,7 +52,7 @@ class CapturesAndLastMoveTest {
         Game game = start();
 
         assertTrue(game.getCapturedPieces(Color.WHITE).isEmpty());
-        assertEquals(0, game.getMaterialAdvantage(Color.WHITE));
+        assertEquals(6, game.getMaterialAdvantage(Color.WHITE));
         assertNull(game.getLastMove());
     }
 
@@ -77,7 +77,7 @@ class CapturesAndLastMoveTest {
 
         assertEquals(List.of("knight"), ids(game.getCapturedPieces(Color.WHITE)));
         assertTrue(game.getCapturedPieces(Color.BLACK).isEmpty());
-        assertEquals(3, game.getMaterialAdvantage(Color.WHITE));
+        assertEquals(6, game.getMaterialAdvantage(Color.WHITE));
         assertEquals(0, game.getMaterialAdvantage(Color.BLACK));
     }
 
@@ -96,7 +96,7 @@ class CapturesAndLastMoveTest {
 
         assertEquals(List.of("queen", "pawn"), ids(game.getCapturedPieces(Color.WHITE)));
         assertEquals(List.of("knight"), ids(game.getCapturedPieces(Color.BLACK)));
-        assertEquals(7, game.getMaterialAdvantage(Color.WHITE), "10 captured against 3");
+        assertEquals(3, game.getMaterialAdvantage(Color.WHITE), "current material: 6 against 3");
     }
 
     @Test

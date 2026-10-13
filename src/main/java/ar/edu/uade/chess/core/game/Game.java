@@ -3,10 +3,12 @@ package ar.edu.uade.chess.core.game;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
+import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.command.MoveCommand;
 import ar.edu.uade.chess.core.command.MoveCommandFactory;
 import ar.edu.uade.chess.core.command.MoveHistory;
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.in.ChessGame;
 import ar.edu.uade.chess.core.port.out.GameObserver;
 import ar.edu.uade.chess.core.rules.MoveValidator;
@@ -173,11 +175,18 @@ public class Game implements ChessGame {
 
     @Override
     public int getMaterialAdvantage(Color color) {
-        return Math.max(0, capturedValue(color) - capturedValue(color.opposite()));
+        return Math.max(0, materialValue(color) - materialValue(color.opposite()));
     }
 
-    private int capturedValue(Color capturer) {
-        return getCapturedPieces(capturer).stream().mapToInt(Piece::getValue).sum();
+    private int materialValue(Color color) {
+        int value = 0;
+        for (Position position : board.getPositionsOf(color)) {
+            Piece piece = board.getPiece(position);
+            if (!piece.hasTrait(PieceTrait.ROYAL)) {
+                value += piece.getValue();
+            }
+        }
+        return value;
     }
 
     /**
