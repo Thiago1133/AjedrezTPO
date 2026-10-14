@@ -1,5 +1,14 @@
 package ar.edu.uade.chess.adapter;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Scanner;
+
+import javax.swing.SwingUtilities;
+
 import ar.edu.uade.chess.adapter.gui.ChessWindow;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
@@ -33,14 +42,6 @@ import ar.edu.uade.chess.core.status.GameStatusEvaluator;
 import ar.edu.uade.chess.core.status.InsufficientMaterialCondition;
 import ar.edu.uade.chess.core.status.StalemateCondition;
 import ar.edu.uade.chess.core.status.ThreefoldRepetitionCondition;
-
-import javax.swing.SwingUtilities;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Scanner;
 
 /**
  * Composition root: the only place where concrete classes are instantiated and wired
