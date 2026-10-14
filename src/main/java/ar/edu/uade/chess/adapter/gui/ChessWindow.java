@@ -7,6 +7,7 @@ import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.in.ChessGame;
 import ar.edu.uade.chess.core.port.out.GameObserver;
 import ar.edu.uade.chess.core.port.in.PromotionOptions;
@@ -362,12 +363,23 @@ public final class ChessWindow extends JFrame implements GameObserver {
         updateCapturedPieces();
         undo.setEnabled(!timeExpired && !aiMovePending && game.canUndo());
         redo.setEnabled(!timeExpired && !aiMovePending && game.canRedo());
+        board.setKingInCheck(checkedKingPosition());
         board.render(game.getBoard());
         turn.setText(game.getStatus().isGameOver() ? "—" : colorName(game.getCurrentTurn()));
         if (game.getStatus() != GameStatus.CHECK) checkedColor = null;
         status.setText(statusName(game.getStatus()));
         board.revalidate();
         board.repaint();
+    }
+
+    private Position checkedKingPosition() {
+        if (game.getStatus() != GameStatus.CHECK && game.getStatus() != GameStatus.CHECKMATE) return null;
+        var currentBoard = game.getBoard();
+        for (Position position : currentBoard.getPositionsOf(game.getCurrentTurn())) {
+            Piece piece = currentBoard.getPiece(position);
+            if (piece != null && piece.hasTrait(PieceTrait.ROYAL)) return position;
+        }
+        return null;
     }
 
     /** The turn change that follows every move refreshes the whole window. */
