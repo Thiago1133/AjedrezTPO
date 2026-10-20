@@ -50,7 +50,8 @@ class ArchitectureTest {
             "ar.edu.uade.chess.core.board.Move",
             "ar.edu.uade.chess.core.board.Position",
             "ar.edu.uade.chess.core.piece.Piece",
-            "ar.edu.uade.chess.core.game.GameStatus");
+            "ar.edu.uade.chess.core.game.GameStatus",
+            "ar.edu.uade.chess.core.game.TimeControl");
     private static final String PORT_PACKAGE = "ar.edu.uade.chess.core.port.";
 
     /** Text comparisons (forbidden in conditionals by the course rules) and Singleton-style global access. */

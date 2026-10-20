@@ -4,6 +4,7 @@ import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.game.GameStatus;
+import ar.edu.uade.chess.core.game.TimeControl;
 import ar.edu.uade.chess.core.piece.Piece;
 
 import java.util.List;
@@ -19,6 +20,11 @@ public interface GameQueries {
     Color getCurrentTurn();
 
     GameStatus getStatus();
+
+    TimeControl getTimeControl();
+
+    /** Remaining seconds for a side, or a negative value when its control is unlimited. */
+    int getRemainingTime(Color color);
 
     /** Every legal move for the player to move (empty if the game is over). */
     List<Move> getLegalMoves();

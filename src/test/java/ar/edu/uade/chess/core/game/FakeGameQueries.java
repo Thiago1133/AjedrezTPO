@@ -64,6 +64,16 @@ class FakeGameQueries implements GameQueries {
     }
 
     @Override
+    public TimeControl getTimeControl() {
+        return TimeControl.UNLIMITED;
+    }
+
+    @Override
+    public int getRemainingTime(Color color) {
+        return -1;
+    }
+
+    @Override
     public boolean canUndo() {
         return false;
     }

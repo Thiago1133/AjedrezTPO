@@ -28,17 +28,30 @@ public class Game implements ChessGame {
     private final GameStatusEvaluator statusEvaluator;
     private final MoveCommandFactory commandFactory;
     private final MoveHistory history;
+    private final TimeControl timeControl;
     private final List<GameObserver> observers = new ArrayList<>();
     private GameStatus status = GameStatus.IN_PROGRESS;
+    private int whiteRemainingSeconds;
+    private int blackRemainingSeconds;
+    private boolean clockStarted;
 
     public Game(Board board, TurnManager turnManager, MoveValidator moveValidator,
                 GameStatusEvaluator statusEvaluator, MoveCommandFactory commandFactory, MoveHistory history) {
+        this(board, turnManager, moveValidator, statusEvaluator, commandFactory, history, TimeControl.UNLIMITED);
+    }
+
+    public Game(Board board, TurnManager turnManager, MoveValidator moveValidator,
+                GameStatusEvaluator statusEvaluator, MoveCommandFactory commandFactory, MoveHistory history,
+                TimeControl timeControl) {
         this.board = board;
         this.turnManager = turnManager;
         this.moveValidator = moveValidator;
         this.statusEvaluator = statusEvaluator;
         this.commandFactory = commandFactory;
         this.history = history;
+        this.timeControl = timeControl;
+        this.whiteRemainingSeconds = timeControl.getInitialSeconds();
+        this.blackRemainingSeconds = timeControl.getInitialSeconds();
     }
 
     @Override
@@ -65,11 +78,34 @@ public class Game implements ChessGame {
         MoveCommand command = commandFactory.create(board, move, history);
         command.execute(board);
         history.push(command);
+        if (!clockStarted && !timeControl.isUnlimited() && color == Color.WHITE) {
+            clockStarted = true;
+        }
         turnManager.next();
         notifyMove(move);
         updateStatus();
         notifyTurn();
         return true;
+    }
+
+    @Override
+    public void advanceClock(int seconds) {
+        if (seconds <= 0 || !clockStarted || timeControl.isUnlimited() || status.isGameOver()) {
+            return;
+        }
+        Color active = turnManager.getCurrentColor();
+        if (active == Color.WHITE) {
+            whiteRemainingSeconds = Math.max(0, whiteRemainingSeconds - seconds);
+            if (whiteRemainingSeconds == 0) finishOnTime(Color.WHITE);
+        } else {
+            blackRemainingSeconds = Math.max(0, blackRemainingSeconds - seconds);
+            if (blackRemainingSeconds == 0) finishOnTime(Color.BLACK);
+        }
+    }
+
+    private void finishOnTime(Color loser) {
+        status = loser == Color.WHITE ? GameStatus.WHITE_TIMEOUT : GameStatus.BLACK_TIMEOUT;
+        observers.forEach(observer -> observer.onGameOver(status));
     }
 
     /**
@@ -207,6 +243,16 @@ public class Game implements ChessGame {
     @Override
     public GameStatus getStatus() {
         return status;
+    }
+
+    @Override
+    public TimeControl getTimeControl() {
+        return timeControl;
+    }
+
+    @Override
+    public int getRemainingTime(Color color) {
+        return color == Color.WHITE ? whiteRemainingSeconds : blackRemainingSeconds;
     }
 
     @Override

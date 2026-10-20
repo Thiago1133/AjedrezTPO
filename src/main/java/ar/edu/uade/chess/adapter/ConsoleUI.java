@@ -24,7 +24,9 @@ public class ConsoleUI implements MoveInput, GameObserver {
     private static final Map<GameStatus, String> RESULT_MESSAGES = Map.of(
             GameStatus.CHECKMATE, "¡Jaque mate!",
             GameStatus.STALEMATE, "Tablas por ahogado.",
-            GameStatus.DRAW, "Tablas.");
+            GameStatus.DRAW, "Tablas.",
+            GameStatus.WHITE_TIMEOUT, "Negras ganan por tiempo.",
+            GameStatus.BLACK_TIMEOUT, "Blancas ganan por tiempo.");
 
     private final Scanner scanner;
     private final PromotionNotation promotionNotation;
