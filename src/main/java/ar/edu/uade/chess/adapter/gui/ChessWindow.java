@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -30,6 +30,7 @@ import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.game.GameStatus;
+import ar.edu.uade.chess.core.game.TimeControl;
 import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.in.ChessGame;
@@ -41,28 +42,27 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private static final int VALUE_FONT_SIZE = 18;
     private static final int SECTION_GAP = 12;
     private static final int ADVANTAGE_GAP = 7;
-    private static final int INITIAL_TIME_SECONDS = 10 * 60;
     private static final int MIN_AI_DELAY_MS = 2_000;
     private static final int MAX_AI_DELAY_MS = 3_000;
-    private final Function<Boolean, ChessGame> gameFactory;
+    private final BiFunction<Boolean, TimeControl, ChessGame> gameFactory;
     private final List<Piece> previewPieces;
     private final PromotionOptions promotionOptions;
     /** Last options chosen; offered again when the next game starts (only while the window is open). */
     private NewGameDialog.NewGameChoice lastChoice = new NewGameDialog.NewGameChoice(false,
-            AppearanceCatalog.pieceStyles().get(0), AppearanceCatalog.boardThemes().get(0));
+            TimeControl.TEN_MINUTES, AppearanceCatalog.pieceStyles().get(0), AppearanceCatalog.boardThemes().get(0));
     private final BoardPanel board = new BoardPanel(this::squareClicked, lastChoice.style(), lastChoice.theme());
     private final JScrollPane boardScroll = new JScrollPane(board);
     private final CoordinateRuler fileRuler = new CoordinateRuler(board, CoordinateRuler.Axis.FILES);
     private final CoordinateRuler rankRuler = new CoordinateRuler(board, CoordinateRuler.Axis.RANKS);
     private final JLabel turn = new JLabel();
     private final JLabel status = new JLabel();
-    private final JLabel whiteClock = new JLabel("10:00");
+    private final JLabel whiteClock = new JLabel();
     private JLabel whiteClockTitle;
     private final CapturedPiecesView capturedByWhite = new CapturedPiecesView();
     private final JLabel whiteAdvantage = new JLabel(" ");
     private final CapturedPiecesView capturedByBlack = new CapturedPiecesView();
     private final JLabel blackAdvantage = new JLabel(" ");
-    private final JLabel blackClock = new JLabel("10:00");
+    private final JLabel blackClock = new JLabel();
     private JLabel blackClockTitle;
     private final JLabel lastMoveText = new JLabel("—");
     private final JLabel message = new JLabel(" ");
@@ -79,13 +79,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private Timer aiDelayTimer;
     private boolean aiMovePending;
     private final Timer chessClock = new Timer(1000, e -> tickClock());
-    private int whiteTimeSeconds = INITIAL_TIME_SECONDS;
-    private int blackTimeSeconds = INITIAL_TIME_SECONDS;
-    private Color runningClock;
-    private boolean clockStarted;
-    private boolean timeExpired;
 
-    public ChessWindow(Function<Boolean, ChessGame> gameFactory, List<Piece> previewPieces,
+    public ChessWindow(BiFunction<Boolean, TimeControl, ChessGame> gameFactory, List<Piece> previewPieces,
                        PromotionOptions promotionOptions) {
         super("Ajedrez");
         this.gameFactory = gameFactory;
@@ -195,27 +190,24 @@ public final class ChessWindow extends JFrame implements GameObserver {
 
     private void startNewGame() {
         cancelPendingAiMove();
+        chessClock.stop();
         Optional<NewGameDialog.NewGameChoice> choice = NewGameDialog.ask(this, lastChoice, previewPieces);
         if (choice.isEmpty()) {
             if (versusComputer && game != null && !game.getStatus().isGameOver()
                     && game.getCurrentTurn() == Color.BLACK) scheduleAiMove();
+            if (!versusComputer && game != null && !game.getStatus().isGameOver()
+                    && !game.getTimeControl().isUnlimited()) chessClock.start();
             return;
         }
         lastChoice = choice.get();
 
         chessClock.stop();
-        runningClock = null;
-        clockStarted = false;
-        timeExpired = false;
-        whiteTimeSeconds = INITIAL_TIME_SECONDS;
-        blackTimeSeconds = INITIAL_TIME_SECONDS;
-        updateClockLabels();
         setClockVisibility(!lastChoice.versusComputer());
 
         if (game != null) game.removeObserver(this);
         versusComputer = lastChoice.versusComputer();
         board.setAppearance(lastChoice.style(), lastChoice.theme());
-        game = gameFactory.apply(versusComputer);
+        game = gameFactory.apply(versusComputer, lastChoice.timeControl());
         game.addObserver(this);
         selected = null;
         checkedColor = null;
@@ -226,11 +218,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
         restart.setText("Nueva partida");
         restart.setEnabled(true);
         game.start();
+        if (!versusComputer && !game.getTimeControl().isUnlimited()) chessClock.start();
         refresh();
     }
 
     private void squareClicked(Position pos) {
-        if (timeExpired || aiMovePending || game.getStatus().isGameOver()) return;
+        if (aiMovePending || game.getStatus().isGameOver()) return;
         Piece piece = game.getBoard().getPiece(pos);
         if (selected == null) {
             if (piece != null && piece.getColor() == game.getCurrentTurn()) select(pos);
@@ -256,10 +249,6 @@ public final class ChessWindow extends JFrame implements GameObserver {
         Move move = game.isPromotion(legalMove)
                 ? new Move(selected, pos, promotionChoice(game.getCurrentTurn()))
                 : legalMove;
-        if (timeExpired) {
-            clearSelection();
-            return;
-        }
         if (game.move(move)) {
             message.setText(" ");
             if (versusComputer && !game.getStatus().isGameOver()) scheduleAiMove();
@@ -395,8 +384,9 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private void refresh() {
         showLastMove();
         updateCapturedPieces();
-        undo.setEnabled(!timeExpired && !aiMovePending && game.canUndo());
-        redo.setEnabled(!timeExpired && !aiMovePending && game.canRedo());
+        updateClockLabels();
+        undo.setEnabled(!aiMovePending && game.canUndo());
+        redo.setEnabled(!aiMovePending && game.canRedo());
         board.setKingInCheck(checkedKingPosition());
         board.render(game.getBoard());
         turn.setText(game.getStatus().isGameOver() ? "—" : colorName(game.getCurrentTurn()));
@@ -416,25 +406,10 @@ public final class ChessWindow extends JFrame implements GameObserver {
         return null;
     }
 
-    /** The turn change that follows every move refreshes the whole window. */
-    @Override public void onMoveExecuted(Move move) {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> onMoveExecuted(move));
-            return;
-        }
-        if (versusComputer || timeExpired) return;
-        if (!clockStarted) {
-            // Game begins with White, so the first accepted move starts Black's clock.
-            if (game.getCurrentTurn() == Color.BLACK) clockStarted = true;
-        }
-        if (clockStarted) runClockFor(game.getCurrentTurn());
-    }
+    @Override public void onMoveExecuted(Move move) { }
 
     @Override public void onTurnChanged(Color color) {
-        Runnable update = () -> {
-            if (!versusComputer && clockStarted && !timeExpired) runClockFor(color);
-            refresh();
-        };
+        Runnable update = this::refresh;
         if (SwingUtilities.isEventDispatchThread()) update.run();
         else SwingUtilities.invokeLater(update);
     }
@@ -457,7 +432,6 @@ public final class ChessWindow extends JFrame implements GameObserver {
         if (handlingGameOver) return;
         handlingGameOver = true;
         chessClock.stop();
-        runningClock = null;
         refresh();
         status.setText("Finalizada");
         message.setText(" ");
@@ -482,6 +456,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
                     + colorName(game.getCurrentTurn().opposite()).toLowerCase();
             case STALEMATE -> "Ahogado";
             case DRAW -> "Tablas";
+            case WHITE_TIMEOUT -> "Negras ganan por tiempo";
+            case BLACK_TIMEOUT -> "Blancas ganan por tiempo";
             default -> "Partida finalizada";
         };
     }
@@ -493,56 +469,21 @@ public final class ChessWindow extends JFrame implements GameObserver {
         blackClock.setVisible(visible);
     }
 
-    private void runClockFor(Color color) {
-        if (runningClock == color && chessClock.isRunning()) return;
-        runningClock = color;
-        chessClock.restart();
-    }
-
     private void tickClock() {
-        if (versusComputer || !clockStarted || timeExpired || runningClock == null) {
-            chessClock.stop();
-            return;
-        }
-        if (runningClock == Color.WHITE) whiteTimeSeconds--;
-        else blackTimeSeconds--;
-        updateClockLabels();
-        int remaining = runningClock == Color.WHITE ? whiteTimeSeconds : blackTimeSeconds;
-        if (remaining <= 0) expireClock(runningClock);
+        game.advanceClock(1);
+        refresh();
+        if (game.getStatus().isGameOver()) chessClock.stop();
     }
 
     private void updateClockLabels() {
-        whiteClock.setText(clockText(whiteTimeSeconds));
-        blackClock.setText(clockText(blackTimeSeconds));
+        whiteClock.setText(clockText(Color.WHITE));
+        blackClock.setText(clockText(Color.BLACK));
     }
 
-    private String clockText(int seconds) {
+    private String clockText(Color color) {
+        if (game.getTimeControl().isUnlimited()) return "Sin límite";
+        int seconds = game.getRemainingTime(color);
         return String.format("%02d:%02d", Math.max(0, seconds) / 60, Math.max(0, seconds) % 60);
-    }
-
-    private void expireClock(Color loser) {
-        chessClock.stop();
-        runningClock = null;
-        timeExpired = true;
-        handlingGameOver = true;
-        selected = null;
-        board.setHighlights(null, Set.of(), Set.of());
-        refresh();
-        status.setText("Finalizada");
-        message.setText(" ");
-        try {
-            JOptionPane.showMessageDialog(this,
-                    colorName(loser.opposite()) + " ganan por tiempo", "Fin de la partida",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } finally {
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    startNewGame();
-                } finally {
-                    handlingGameOver = false;
-                }
-            });
-        }
     }
 
     private void showLastMove() {
@@ -574,6 +515,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
                     + colorName(game.getCurrentTurn().opposite()).toLowerCase() + "</html>";
             case STALEMATE -> "Ahogado";
             case DRAW -> "Tablas";
+            case WHITE_TIMEOUT, BLACK_TIMEOUT -> "Finalizada por tiempo";
         };
     }
 

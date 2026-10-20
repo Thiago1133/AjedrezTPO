@@ -1,11 +1,13 @@
 package ar.edu.uade.chess.adapter.gui;
 
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.game.TimeControl;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -42,6 +44,7 @@ final class NewGameDialog extends JDialog {
     private final List<JPanel> themeCards = new ArrayList<>();
     private final JToggleButton twoPlayers = new JToggleButton("Dos jugadores");
     private final JToggleButton versusComputer = new JToggleButton("Contra la computadora");
+    private final JComboBox<TimeControl> timeControl = new JComboBox<>(TimeControl.values());
     private PieceStyle style;
     private BoardTheme theme;
     private NewGameChoice result;
@@ -53,6 +56,7 @@ final class NewGameDialog extends JDialog {
         this.theme = initial.theme();
         twoPlayers.setSelected(!initial.versusComputer());
         versusComputer.setSelected(initial.versusComputer());
+        timeControl.setSelectedItem(initial.timeControl());
         buildLayout();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
@@ -82,6 +86,12 @@ final class NewGameDialog extends JDialog {
         modes.add(versusComputer);
         root.add(row(twoPlayers, versusComputer));
 
+        root.add(title("TIEMPO DE PARTIDA"));
+        root.add(row(timeControl));
+        twoPlayers.addActionListener(e -> updateTimeControlEnabled());
+        versusComputer.addActionListener(e -> updateTimeControlEnabled());
+        updateTimeControlEnabled();
+
         root.add(title("PIEZAS"));
         JPanel styleRow = row();
         for (PieceStyle option : AppearanceCatalog.pieceStyles()) {
@@ -110,7 +120,8 @@ final class NewGameDialog extends JDialog {
 
         JButton start = new JButton("Empezar");
         start.addActionListener(e -> {
-            result = new NewGameChoice(versusComputer.isSelected(), style, theme);
+            result = new NewGameChoice(versusComputer.isSelected(),
+                    (TimeControl) timeControl.getSelectedItem(), style, theme);
             dispose();
         });
         JPanel footer = row(start);
@@ -129,6 +140,10 @@ final class NewGameDialog extends JDialog {
         List<BoardTheme> themes = AppearanceCatalog.boardThemes();
         for (int i = 0; i < themeCards.size(); i++) outline(themeCards.get(i), themes.get(i) == theme);
         previews.forEach(JComponent::repaint);
+    }
+
+    private void updateTimeControlEnabled() {
+        timeControl.setEnabled(!versusComputer.isSelected());
     }
 
     private void outline(JPanel card, boolean selected) {
@@ -196,6 +211,6 @@ final class NewGameDialog extends JDialog {
     }
 
     /** What the player chose for the next game. */
-    record NewGameChoice(boolean versusComputer, PieceStyle style, BoardTheme theme) {
+    record NewGameChoice(boolean versusComputer, TimeControl timeControl, PieceStyle style, BoardTheme theme) {
     }
 }

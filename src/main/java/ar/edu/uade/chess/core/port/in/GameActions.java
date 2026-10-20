@@ -12,6 +12,9 @@ public interface GameActions {
     /** Plays the move for the current player. False if it is illegal or the game is over. */
     boolean move(Move move);
 
+    /** Advances the active player's clock, if this game has a finite clock in progress. */
+    void advanceClock(int seconds);
+
     /** Takes back the last move; against the computer, until the human is to move again. */
     void undo();
 

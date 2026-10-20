@@ -9,7 +9,9 @@ public enum GameStatus {
     CHECK(false),
     CHECKMATE(true),
     STALEMATE(true),
-    DRAW(true);
+    DRAW(true),
+    WHITE_TIMEOUT(true),
+    BLACK_TIMEOUT(true);
 
     private final boolean gameOver;
 

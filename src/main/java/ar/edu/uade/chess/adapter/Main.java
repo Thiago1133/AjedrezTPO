@@ -20,6 +20,7 @@ import ar.edu.uade.chess.core.game.HumanPlayerStrategy;
 import ar.edu.uade.chess.core.game.MaterialEvaluationStrategy;
 import ar.edu.uade.chess.core.game.Player;
 import ar.edu.uade.chess.core.game.PlayerStrategy;
+import ar.edu.uade.chess.core.game.TimeControl;
 import ar.edu.uade.chess.core.game.TurnManager;
 import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
@@ -63,7 +64,8 @@ public class Main {
 
         Runnable window = () -> SwingUtilities.invokeLater(() -> {
             ChessWindow chessWindow = new ChessWindow(
-                    versusComputer -> createGame(pieceFactory, promotionRule, versusComputer, color -> null),
+                    (versusComputer, timeControl) -> createGame(
+                            pieceFactory, promotionRule, versusComputer, timeControl, color -> null),
                     previewPieces(), promotionRule);
             if (chessWindow.hasGame()) chessWindow.setVisible(true);
         });
@@ -75,12 +77,12 @@ public class Main {
     private static void runConsole(PieceFactory pieceFactory, PromotionRule promotionRule) {
         Scanner scanner = new Scanner(System.in);
         ConsoleUI console = new ConsoleUI(scanner, promotionRule);
-        console.run(createGame(pieceFactory, promotionRule, askVersusComputer(scanner), console));
+        console.run(createGame(pieceFactory, promotionRule, askVersusComputer(scanner), TimeControl.UNLIMITED, console));
     }
 
     /** Builds a game with human input supplied by the selected adapter. */
     private static Game createGame(PieceFactory pieceFactory, PromotionRule promotionRule,
-                                   boolean versusComputer, MoveInput humanInput) {
+                                   boolean versusComputer, TimeControl timeControl, MoveInput humanInput) {
         Board board = new Board(8, 8);
         new StandardChessSetup(pieceFactory).setup(board);
 
@@ -104,7 +106,8 @@ public class Main {
                 new Player(Color.WHITE, new HumanPlayerStrategy(humanInput)),
                 new Player(Color.BLACK, blackStrategy));
 
-        return new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory());
+        return new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory(),
+                versusComputer ? TimeControl.UNLIMITED : timeControl);
     }
 
     /** Pieces shown in the new-game dialog to preview each piece style and board theme. */
