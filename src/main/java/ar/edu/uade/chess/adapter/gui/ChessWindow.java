@@ -1,16 +1,15 @@
 package ar.edu.uade.chess.adapter.gui;
 
-import ar.edu.uade.chess.adapter.PieceNames;
-import ar.edu.uade.chess.adapter.SquareNotation;
-import ar.edu.uade.chess.core.board.Color;
-import ar.edu.uade.chess.core.board.Move;
-import ar.edu.uade.chess.core.board.Position;
-import ar.edu.uade.chess.core.game.GameStatus;
-import ar.edu.uade.chess.core.piece.Piece;
-import ar.edu.uade.chess.core.piece.PieceTrait;
-import ar.edu.uade.chess.core.port.in.ChessGame;
-import ar.edu.uade.chess.core.port.out.GameObserver;
-import ar.edu.uade.chess.core.port.in.PromotionOptions;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -24,15 +23,18 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Rectangle;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
+
+import ar.edu.uade.chess.adapter.PieceNames;
+import ar.edu.uade.chess.adapter.SquareNotation;
+import ar.edu.uade.chess.core.board.Color;
+import ar.edu.uade.chess.core.board.Move;
+import ar.edu.uade.chess.core.board.Position;
+import ar.edu.uade.chess.core.game.GameStatus;
+import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.piece.PieceTrait;
+import ar.edu.uade.chess.core.port.in.ChessGame;
+import ar.edu.uade.chess.core.port.in.PromotionOptions;
+import ar.edu.uade.chess.core.port.out.GameObserver;
 
 /** Swing adapter: translates clicks into moves and displays core state. */
 public final class ChessWindow extends JFrame implements GameObserver {
@@ -40,6 +42,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private static final int SECTION_GAP = 12;
     private static final int ADVANTAGE_GAP = 7;
     private static final int INITIAL_TIME_SECONDS = 10 * 60;
+    private static final int MIN_AI_DELAY_MS = 2_000;
+    private static final int MAX_AI_DELAY_MS = 3_000;
     private final Function<Boolean, ChessGame> gameFactory;
     private final List<Piece> previewPieces;
     private final PromotionOptions promotionOptions;
@@ -72,6 +76,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private boolean versusComputer;
     private boolean handlingGameOver;
     private SwingWorker<Boolean, Void> aiMoveWorker;
+    private Timer aiDelayTimer;
     private boolean aiMovePending;
     private final Timer chessClock = new Timer(1000, e -> tickClock());
     private int whiteTimeSeconds = INITIAL_TIME_SECONDS;
@@ -309,9 +314,33 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void scheduleAiMove() {
-        if (aiMovePending) return;
+        if (!versusComputer || aiMovePending || game.getStatus().isGameOver()) return;
         aiMovePending = true;
         ChessGame scheduledGame = game;
+        int delay = ThreadLocalRandom.current().nextInt(MIN_AI_DELAY_MS, MAX_AI_DELAY_MS + 1);
+        Timer delayTimer = new Timer(delay, event -> {
+            Timer sourceTimer = (Timer) event.getSource();
+
+            if (aiDelayTimer != sourceTimer) return;
+
+            aiDelayTimer = null;
+
+            if (game != scheduledGame
+                    || !versusComputer
+                    || scheduledGame.getStatus().isGameOver()) {
+                aiMovePending = false;
+                refresh();
+                return;
+            }
+
+            runAiMove(scheduledGame);
+        });
+        delayTimer.setRepeats(false);
+        aiDelayTimer = delayTimer;
+        delayTimer.start();
+    }
+
+    private void runAiMove(ChessGame scheduledGame) {
         aiMoveWorker = new SwingWorker<>() {
             @Override
             protected Boolean doInBackground() {
@@ -320,7 +349,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
 
             @Override
             protected void done() {
-                if (aiMoveWorker == this) aiMoveWorker = null;
+                if (aiMoveWorker != this) return;
+                aiMoveWorker = null;
                 aiMovePending = false;
                 if (game == scheduledGame) refresh();
             }
@@ -329,6 +359,10 @@ public final class ChessWindow extends JFrame implements GameObserver {
     }
 
     private void cancelPendingAiMove() {
+        if (aiDelayTimer != null) {
+            aiDelayTimer.stop();
+            aiDelayTimer = null;
+        }
         if (aiMoveWorker != null) {
             aiMoveWorker.cancel(true);
             aiMoveWorker = null;
