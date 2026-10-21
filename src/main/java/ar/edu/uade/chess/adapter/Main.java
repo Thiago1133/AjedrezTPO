@@ -67,7 +67,7 @@ public class Main {
             ChessWindow chessWindow = new ChessWindow(
                     (versusComputer, timeControl) -> createGame(
                             pieceFactory, promotionRule, versusComputer, timeControl, color -> null),
-                    previewPieces(), promotionRule);
+                    previewPieces(), promotionRule, new Random());
             if (chessWindow.hasGame()) chessWindow.setVisible(true);
         });
         // Launch flags are looked up like console commands; without a known flag the window opens.
