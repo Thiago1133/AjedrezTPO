@@ -11,6 +11,8 @@ import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.in.ChessGame;
 import ar.edu.uade.chess.core.port.out.GameObserver;
+import ar.edu.uade.chess.core.rules.CastlingRule;
+import ar.edu.uade.chess.core.rules.EnPassantRule;
 import ar.edu.uade.chess.core.rules.MoveValidator;
 import ar.edu.uade.chess.core.status.GameStatusEvaluator;
 
@@ -182,6 +184,13 @@ public class Game implements ChessGame {
     }
 
     @Override
+    public boolean givesCheck(Move move) {
+        Color color = turnManager.getCurrentColor();
+        return !status.isGameOver() && moveValidator.isLegal(board, move, history, color)
+                && moveValidator.leavesKingInCheck(board, move, history, color.opposite());
+    }
+
+    @Override
     public Move getLastMove() {
         return history.getLastMove();
     }
@@ -238,6 +247,16 @@ public class Game implements ChessGame {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Position> getCastlingPartners(Color color) {
+        return CastlingRule.partnersStillAvailable(board, color);
+    }
+
+    @Override
+    public Position getEnPassantSquare() {
+        return EnPassantRule.skippedSquare(board, history.getLastMove());
     }
 
     @Override

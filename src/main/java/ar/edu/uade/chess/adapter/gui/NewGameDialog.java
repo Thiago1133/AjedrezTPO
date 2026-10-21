@@ -1,6 +1,7 @@
 package ar.edu.uade.chess.adapter.gui;
 
 import ar.edu.uade.chess.core.piece.Piece;
+import ar.edu.uade.chess.core.game.Difficulty;
 import ar.edu.uade.chess.core.game.TimeControl;
 
 import javax.swing.BorderFactory;
@@ -53,6 +54,9 @@ final class NewGameDialog extends JDialog {
             TimeControl.THIRTY_MINUTES, "30 minutos", TimeControl.TEN_MINUTES, "10 minutos",
             TimeControl.FIVE_MINUTES, "5 minutos", TimeControl.UNLIMITED, "Ilimitado");
     private final JComboBox<TimeControl> timeControl = new JComboBox<>(TimeControl.values());
+    private static final Map<Difficulty, String> DIFFICULTY_NAMES = Map.of(
+            Difficulty.EASY, "Fácil", Difficulty.MEDIUM, "Medio", Difficulty.HARD, "Difícil");
+    private final JComboBox<Difficulty> difficulty = new JComboBox<>(Difficulty.values());
     private PieceStyle style;
     private BoardTheme theme;
     private NewGameChoice result;
@@ -65,15 +69,9 @@ final class NewGameDialog extends JDialog {
         twoPlayers.setSelected(!initial.versusComputer());
         versusComputer.setSelected(initial.versusComputer());
         timeControl.setSelectedItem(initial.timeControl());
-        timeControl.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                setText(value == null ? " " : TIME_NAMES.getOrDefault(value, " "));
-                return this;
-            }
-        });
+        difficulty.setSelectedItem(initial.difficulty());
+        difficulty.setRenderer(namedBy(DIFFICULTY_NAMES));
+        timeControl.setRenderer(namedBy(TIME_NAMES));
         buildLayout();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
@@ -105,9 +103,11 @@ final class NewGameDialog extends JDialog {
 
         root.add(title("TIEMPO DE PARTIDA"));
         root.add(row(timeControl));
-        twoPlayers.addActionListener(e -> updateTimeControlEnabled());
-        versusComputer.addActionListener(e -> updateTimeControlEnabled());
-        updateTimeControlEnabled();
+        root.add(title("DIFICULTAD"));
+        root.add(row(difficulty));
+        twoPlayers.addActionListener(e -> updateModeOptions());
+        versusComputer.addActionListener(e -> updateModeOptions());
+        updateModeOptions();
 
         root.add(title("PIEZAS"));
         JPanel styleRow = row();
@@ -137,8 +137,8 @@ final class NewGameDialog extends JDialog {
 
         JButton start = new JButton("Empezar");
         start.addActionListener(e -> {
-            result = new NewGameChoice(versusComputer.isSelected(),
-                    (TimeControl) timeControl.getSelectedItem(), style, theme);
+            result = new NewGameChoice(versusComputer.isSelected(), (TimeControl) timeControl.getSelectedItem(),
+                    (Difficulty) difficulty.getSelectedItem(), style, theme);
             dispose();
         });
         JPanel footer = row(start);
@@ -159,8 +159,23 @@ final class NewGameDialog extends JDialog {
         previews.forEach(JComponent::repaint);
     }
 
-    private void updateTimeControlEnabled() {
+    /** The clock is for two players; the difficulty, for games against the computer. */
+    private void updateModeOptions() {
         timeControl.setEnabled(!versusComputer.isSelected());
+        difficulty.setEnabled(versusComputer.isSelected());
+    }
+
+    /** Shows each option of a drop-down list by its Spanish name. */
+    private static DefaultListCellRenderer namedBy(Map<?, String> names) {
+        return new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? " " : names.getOrDefault(value, " "));
+                return this;
+            }
+        };
     }
 
     private void outline(JPanel card, boolean selected) {
@@ -228,6 +243,7 @@ final class NewGameDialog extends JDialog {
     }
 
     /** What the player chose for the next game. */
-    record NewGameChoice(boolean versusComputer, TimeControl timeControl, PieceStyle style, BoardTheme theme) {
+    record NewGameChoice(boolean versusComputer, TimeControl timeControl, Difficulty difficulty,
+                         PieceStyle style, BoardTheme theme) {
     }
 }

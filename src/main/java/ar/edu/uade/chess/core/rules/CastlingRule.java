@@ -1,6 +1,7 @@
 package ar.edu.uade.chess.core.rules;
 
 import ar.edu.uade.chess.core.board.Board;
+import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Direction;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
@@ -68,6 +69,37 @@ public class CastlingRule implements SpecialMoveRule {
             }
         }
         return result;
+    }
+
+    /**
+     * Squares of the partners a side can still castle with: unmoved CASTLES pieces on the row
+     * of its unmoved castling royal piece, whether or not castling is possible right now.
+     */
+    public static List<Position> partnersStillAvailable(Board board, Color color) {
+        List<Position> partners = new ArrayList<>();
+        for (Position position : board.getPositionsOf(color)) {
+            Piece piece = board.getPiece(position);
+            if (piece.hasTrait(PieceTrait.ROYAL) && piece.hasTrait(PieceTrait.CASTLES) && !piece.hasMoved()) {
+                for (int side : new int[] {-1, 1}) {
+                    Position partner = unmovedPartnerAlongRow(board, position, new Direction(0, side));
+                    if (partner != null) partners.add(partner);
+                }
+            }
+        }
+        return partners;
+    }
+
+    /** The unmoved partner on that side of the row, even with pieces in between (the right is kept). */
+    private static Position unmovedPartnerAlongRow(Board board, Position kingPosition, Direction step) {
+        Color color = board.getPiece(kingPosition).getColor();
+        for (Position current = kingPosition.offset(step); board.isInside(current); current = current.offset(step)) {
+            Piece piece = board.getPiece(current);
+            if (piece != null && piece.getColor() == color && piece.hasTrait(PieceTrait.CASTLES)
+                    && !piece.hasTrait(PieceTrait.ROYAL) && !piece.hasMoved()) {
+                return current;
+            }
+        }
+        return null;
     }
 
     /** First piece along the row; returns it only if it is a valid unmoved castling partner. */

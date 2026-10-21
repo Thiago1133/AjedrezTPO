@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -23,11 +23,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
+import ar.edu.uade.chess.adapter.GameSettings;
 import ar.edu.uade.chess.adapter.PieceNames;
 import ar.edu.uade.chess.adapter.SquareNotation;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
+import ar.edu.uade.chess.core.game.Difficulty;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.game.TimeControl;
 import ar.edu.uade.chess.core.piece.Piece;
@@ -40,12 +42,13 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private static final int VALUE_FONT_SIZE = 18;
     private static final int SECTION_GAP = 12;
     private static final int ADVANTAGE_GAP = 7;
-    private final BiFunction<Boolean, TimeControl, ChessGame> gameFactory;
+    private final Function<GameSettings, ChessGame> gameFactory;
+    private final boolean engineAvailable;
     private final List<Piece> previewPieces;
     private final PromotionOptions promotionOptions;
     /** Last options chosen; offered again when the next game starts (only while the window is open). */
     private NewGameDialog.NewGameChoice lastChoice = new NewGameDialog.NewGameChoice(false,
-            TimeControl.TEN_MINUTES, AppearanceCatalog.pieceStyles().get(0), AppearanceCatalog.boardThemes().get(0));
+            TimeControl.TEN_MINUTES, Difficulty.MEDIUM, AppearanceCatalog.pieceStyles().get(0), AppearanceCatalog.boardThemes().get(0));
     private final BoardPanel board = new BoardPanel(this::squareClicked, lastChoice.style(), lastChoice.theme());
     private final JScrollPane boardScroll = new JScrollPane(board);
     private final CoordinateRuler fileRuler = new CoordinateRuler(board, CoordinateRuler.Axis.FILES);
@@ -70,11 +73,15 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private boolean handlingGameOver;
     private final ComputerTurn computerTurn;
 
-    /** @param random decides how long the computer "thinks" (injected, as everywhere else). */
-    public ChessWindow(BiFunction<Boolean, TimeControl, ChessGame> gameFactory, List<Piece> previewPieces,
-                       PromotionOptions promotionOptions, Random random) {
+    /**
+     * @param random          decides how long the computer "thinks" (injected, as everywhere else)
+     * @param engineAvailable whether the chess engine can be used; if not, a short notice is shown
+     */
+    public ChessWindow(Function<GameSettings, ChessGame> gameFactory, List<Piece> previewPieces,
+                       PromotionOptions promotionOptions, Random random, boolean engineAvailable) {
         super("Ajedrez");
         this.gameFactory = gameFactory;
+        this.engineAvailable = engineAvailable;
         this.computerTurn = new ComputerTurn(random, this::refresh);
         this.previewPieces = List.copyOf(previewPieces);
         this.promotionOptions = promotionOptions;
@@ -197,7 +204,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         if (game != null) game.removeObserver(this);
         versusComputer = lastChoice.versusComputer();
         board.setAppearance(lastChoice.style(), lastChoice.theme());
-        game = gameFactory.apply(versusComputer, lastChoice.timeControl());
+        game = gameFactory.apply(new GameSettings(versusComputer, lastChoice.timeControl(), lastChoice.difficulty()));
         game.addObserver(this);
         selected = null;
         checkedColor = null;
@@ -209,6 +216,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         restart.setEnabled(true);
         game.start();
         clock.startFor(game);
+        if (versusComputer && !engineAvailable) message.setText("Stockfish no disponible: juego básico");
         refresh();
     }
 

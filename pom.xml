@@ -13,6 +13,10 @@
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.11.3</junit.version>
+        <!-- Chess engine for the computer player, downloaded by the build (not kept in Git). -->
+        <stockfish.release>https://github.com/official-stockfish/Stockfish/releases/download/sf_19</stockfish.release>
+        <engine.directory>${project.build.directory}/engine</engine.directory>
+        <stockfish.cache>${settings.localRepository}/.cache/stockfish</stockfish.cache>
     </properties>
 
     <dependencies>
@@ -26,6 +30,36 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <!-- For IDEs that import the project with m2e (VS Code, Eclipse): the engine download
+                     runs only in the Maven build, not inside the editor. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-antrun-plugin</artifactId>
+                                        <versionRange>[3.2.0,)</versionRange>
+                                        <goals>
+                                            <goal>run</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -44,6 +78,89 @@
                     </archive>
                 </configuration>
             </plugin>
+            <!-- Downloads the engine for this operating system (see the profiles) into a cache inside
+                 the local Maven repository, checks its SHA-256 and unpacks it into target/engine.
+                 Any problem (no internet, a damaged file) only prints a warning: the build goes on
+                 and the computer plays without the engine. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>stockfish</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target xmlns:if="ant:if" xmlns:unless="ant:unless">
+                                <property name="archive" value="${stockfish.cache}/${stockfish.archive}"/>
+                                <mkdir dir="${stockfish.cache}"/>
+                                <get src="${stockfish.release}/${stockfish.archive}" dest="${archive}"
+                                     skipexisting="true" ignoreerrors="true" quiet="true"/>
+                                <available file="${archive}" property="stockfish.downloaded"/>
+                                <checksum file="${archive}" algorithm="SHA-256" property="${stockfish.sha256}"
+                                          verifyproperty="stockfish.verified" if:set="stockfish.downloaded"/>
+                                <condition property="stockfish.ok">
+                                    <istrue value="${stockfish.verified}"/>
+                                </condition>
+                                <delete file="${archive}" if:set="stockfish.downloaded" unless:set="stockfish.ok"/>
+                                <echo level="warning" message="Stockfish not available: the computer will play without it."
+                                      unless:set="stockfish.ok"/>
+                                <unzip src="${archive}" dest="${engine.directory}" overwrite="false"
+                                       if:set="stockfish.ok" unless:set="stockfish.tarred"/>
+                                <untar src="${archive}" dest="${engine.directory}" compression="gzip" overwrite="false"
+                                       if:set="stockfish.tarred"/>
+                                <chmod dir="${engine.directory}" perm="u+x" includes="**/stockfish*"
+                                       if:set="stockfish.tarred"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>stockfish-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <stockfish.archive>stockfish-windows-x86-64-universal.zip</stockfish.archive>
+                <stockfish.sha256>3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7</stockfish.sha256>
+            </properties>
+        </profile>
+        <profile>
+            <id>stockfish-linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <name>Linux</name>
+                </os>
+            </activation>
+            <properties>
+                <stockfish.archive>stockfish-linux-x86-64-universal.tar.gz</stockfish.archive>
+                <stockfish.sha256>9defc0d4e55d49c65a6d042f3e571a39fcea499ade6dbe741b53b8c65e03611f</stockfish.sha256>
+                <stockfish.tarred>true</stockfish.tarred>
+            </properties>
+        </profile>
+        <profile>
+            <id>stockfish-macos</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <stockfish.archive>stockfish-macos-universal.tar.gz</stockfish.archive>
+                <stockfish.sha256>a1f0e3bcc5a6927a11fe6fc8e54a779754645f3c2bae2cf13420fd1957adaa77</stockfish.sha256>
+                <stockfish.tarred>true</stockfish.tarred>
+            </properties>
+        </profile>
+    </profiles>
 </project>

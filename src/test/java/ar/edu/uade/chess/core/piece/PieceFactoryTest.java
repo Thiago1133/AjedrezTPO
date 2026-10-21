@@ -2,12 +2,10 @@ package ar.edu.uade.chess.core.piece;
 
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
-import ar.edu.uade.chess.core.board.Direction;
 import ar.edu.uade.chess.core.board.Position;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 

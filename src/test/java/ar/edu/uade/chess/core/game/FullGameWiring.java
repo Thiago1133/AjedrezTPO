@@ -30,23 +30,23 @@ import java.util.Random;
  * Same wiring as the composition root (Main), so these tests exercise every real rule and
  * end condition.
  */
-final class FullGameWiring {
+public final class FullGameWiring {
     private FullGameWiring() {
     }
 
-    static PieceFactory standardPieces() {
+    public static PieceFactory standardPieces() {
         return new PieceFactory(List.of(
                 new PawnDefinition(), new RookDefinition(), new KnightDefinition(),
                 new BishopDefinition(), new QueenDefinition(), new KingDefinition()));
     }
 
     /** Both sides are moved by the test through Game.move. */
-    static Game twoPlayers(Board board, PieceFactory pieceFactory) {
+    public static Game twoPlayers(Board board, PieceFactory pieceFactory) {
         return twoPlayers(board, pieceFactory, TimeControl.UNLIMITED);
     }
 
     /** Two players with a clock, as chosen in the new-game dialog. */
-    static Game twoPlayers(Board board, PieceFactory pieceFactory, TimeControl timeControl) {
+    public static Game twoPlayers(Board board, PieceFactory pieceFactory, TimeControl timeControl) {
         FakeMoveInput noInput = new FakeMoveInput(List.of());
         return create(board, pieceFactory, new HumanPlayerStrategy(noInput), timeControl);
     }
@@ -54,7 +54,7 @@ final class FullGameWiring {
     /** Black is played by the real AI, as in "Contra la computadora". */
     static Game versusComputer(Board board, PieceFactory pieceFactory) {
         return create(board, pieceFactory,
-                new AIPlayerStrategy(new MaterialEvaluationStrategy(new CheckDetector()), new Random(0)),
+                new AIPlayerStrategy(new MaterialEvaluator(new CheckDetector()), new Random(0)),
                 TimeControl.UNLIMITED);
     }
 

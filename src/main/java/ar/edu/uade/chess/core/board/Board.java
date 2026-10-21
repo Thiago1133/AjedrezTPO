@@ -46,27 +46,6 @@ public class Board {
                 && position.getColumn() >= 0 && position.getColumn() < columns;
     }
 
-    /**
-     * True when every square strictly between from and to is empty.
-     * Only meaningful for straight or diagonal lines; returns false otherwise.
-     */
-    public boolean isPathClear(Position from, Position to) {
-        int rowDelta = to.getRow() - from.getRow();
-        int columnDelta = to.getColumn() - from.getColumn();
-        boolean straight = rowDelta == 0 || columnDelta == 0;
-        boolean diagonal = Math.abs(rowDelta) == Math.abs(columnDelta);
-        if (from.equals(to) || !(straight || diagonal)) {
-            return false;
-        }
-        Direction step = new Direction(Integer.signum(rowDelta), Integer.signum(columnDelta));
-        for (Position current = from.offset(step); !current.equals(to); current = current.offset(step)) {
-            if (!isEmpty(current)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public void placePiece(Piece piece, Position position) {
         requireInside(position);
         pieces.put(position, piece);

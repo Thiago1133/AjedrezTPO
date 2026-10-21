@@ -1,21 +1,17 @@
 package ar.edu.uade.chess.core.rules;
 
 import ar.edu.uade.chess.core.board.Color;
-import ar.edu.uade.chess.core.board.Direction;
 import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
 import ar.edu.uade.chess.core.piece.PawnDefinition;
 import ar.edu.uade.chess.core.piece.Piece;
-import ar.edu.uade.chess.core.piece.PieceDefinition;
 import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
-import ar.edu.uade.chess.core.piece.SlidingMovement;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 

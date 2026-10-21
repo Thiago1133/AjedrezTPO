@@ -21,7 +21,7 @@ class AIPlayerStrategyTest {
 
     private final Board board = new Board(8, 8);
     private final CheckDetector checkDetector = new CheckDetector();
-    private final MaterialEvaluationStrategy evaluator = new MaterialEvaluationStrategy(checkDetector);
+    private final MaterialEvaluator evaluator = new MaterialEvaluator(checkDetector);
 
     private static Position at(String square) {
         return new Position(square.charAt(1) - '1', square.charAt(0) - 'a');
