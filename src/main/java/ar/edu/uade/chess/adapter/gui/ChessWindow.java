@@ -192,14 +192,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
         if (choice.isEmpty()) {
             if (versusComputer && game != null && !game.getStatus().isGameOver()
                     && game.getCurrentTurn() == Color.BLACK) scheduleAiMove();
-            if (!versusComputer && game != null && !game.getStatus().isGameOver()
-                    && !game.getTimeControl().isUnlimited()) chessClock.start();
+            if (game != null && !game.getStatus().isGameOver() && hasClock()) chessClock.start();
             return;
         }
         lastChoice = choice.get();
 
         chessClock.stop();
-        setClockVisibility(!lastChoice.versusComputer());
 
         if (game != null) game.removeObserver(this);
         versusComputer = lastChoice.versusComputer();
@@ -215,7 +213,8 @@ public final class ChessWindow extends JFrame implements GameObserver {
         restart.setText("Nueva partida");
         restart.setEnabled(true);
         game.start();
-        if (!versusComputer && !game.getTimeControl().isUnlimited()) chessClock.start();
+        setClockVisibility(hasClock());
+        if (hasClock()) chessClock.start();
         refresh();
     }
 
@@ -432,9 +431,21 @@ public final class ChessWindow extends JFrame implements GameObserver {
         blackClock.setVisible(visible);
     }
 
+    /**
+     * Whether this game has a time limit. Which games get one (never against the computer)
+     * is decided where the game is built, in Main; the window just follows the game.
+     */
+    private boolean hasClock() {
+        return !game.getTimeControl().isUnlimited();
+    }
+
+    /**
+     * Once a second: only the clock labels change. Running out of time ends the game in the
+     * core, which notifies onGameOver, and that refreshes the whole window.
+     */
     private void tickClock() {
         game.advanceClock(1);
-        refresh();
+        updateClockLabels();
         if (game.getStatus().isGameOver()) chessClock.stop();
     }
 
