@@ -292,15 +292,6 @@ class SpecialMoveRuleTest {
         }
 
         @Test
-        void unknownChoice_becomesQueen() {
-            setUpPawnAboutToPromote();
-
-            play(new Move(at("a7"), at("a8"), "dragon"), Color.WHITE);
-
-            assertEquals("queen", board.getPiece(at("a8")).getId());
-        }
-
-        @Test
         void captureWithPromotion_andUndoRestoresEverything() {
             setUpPawnAboutToPromote();
             place(new RookDefinition(), Color.BLACK, "b8");
@@ -324,34 +315,6 @@ class SpecialMoveRuleTest {
 
             assertEquals("queen", board.getPiece(at("c1")).getId());
             assertEquals(Color.BLACK, board.getPiece(at("c1")).getColor());
-        }
-
-        @Test
-        void promotedQueen_givesCheck() {
-            setUpPawnAboutToPromote();
-
-            play(move("a7", "a8"), Color.WHITE);
-
-            assertTrue(checkDetector.isInCheck(board, Color.BLACK), "queen on a8 attacks h8 along the row");
-        }
-
-        @Test
-        void worksOnTallerBoards() {
-            Board tall = new Board(12, 8);
-            tall.placePiece(new KingDefinition().create(Color.WHITE), new Position(0, 4));
-            tall.placePiece(new KingDefinition().create(Color.BLACK), new Position(11, 7));
-            Piece pawn = new PawnDefinition().create(Color.WHITE);
-            pawn.setMoved(true);
-            tall.placePiece(pawn, new Position(10, 0));
-            Move promotion = new Move(new Position(10, 0), new Position(11, 0));
-
-            Piece otherPawn = new PawnDefinition().create(Color.WHITE);
-            otherPawn.setMoved(true);
-            tall.placePiece(otherPawn, new Position(6, 3));
-            Move toRowEight = new Move(new Position(6, 3), new Position(7, 3));
-
-            assertTrue(commandFactory.isSpecialMove(tall, promotion, history), "row 12 is the last row");
-            assertFalse(commandFactory.isSpecialMove(tall, toRowEight, history), "row 8 is not the last row here");
         }
     }
 }

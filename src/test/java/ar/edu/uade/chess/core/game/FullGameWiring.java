@@ -42,17 +42,24 @@ final class FullGameWiring {
 
     /** Both sides are moved by the test through Game.move. */
     static Game twoPlayers(Board board, PieceFactory pieceFactory) {
+        return twoPlayers(board, pieceFactory, TimeControl.UNLIMITED);
+    }
+
+    /** Two players with a clock, as chosen in the new-game dialog. */
+    static Game twoPlayers(Board board, PieceFactory pieceFactory, TimeControl timeControl) {
         FakeMoveInput noInput = new FakeMoveInput(List.of());
-        return create(board, pieceFactory, new HumanPlayerStrategy(noInput));
+        return create(board, pieceFactory, new HumanPlayerStrategy(noInput), timeControl);
     }
 
     /** Black is played by the real AI, as in "Contra la computadora". */
     static Game versusComputer(Board board, PieceFactory pieceFactory) {
         return create(board, pieceFactory,
-                new AIPlayerStrategy(new MaterialEvaluationStrategy(new CheckDetector()), new Random(0)));
+                new AIPlayerStrategy(new MaterialEvaluationStrategy(new CheckDetector()), new Random(0)),
+                TimeControl.UNLIMITED);
     }
 
-    private static Game create(Board board, PieceFactory pieceFactory, PlayerStrategy blackStrategy) {
+    private static Game create(Board board, PieceFactory pieceFactory, PlayerStrategy blackStrategy,
+                               TimeControl timeControl) {
         CheckDetector checkDetector = new CheckDetector();
         MoveCommandFactory commandFactory = new MoveCommandFactory(List.of(
                 new CastlingRule(checkDetector),
@@ -68,6 +75,7 @@ final class FullGameWiring {
         TurnManager turns = new TurnManager(
                 new Player(Color.WHITE, new HumanPlayerStrategy(new FakeMoveInput(List.of()))),
                 new Player(Color.BLACK, blackStrategy));
-        return new Game(board, turns, moveValidator, statusEvaluator, commandFactory, new MoveHistory());
+        return new Game(board, turns, moveValidator, statusEvaluator, commandFactory, new MoveHistory(),
+                new ChessClock(timeControl));
     }
 }

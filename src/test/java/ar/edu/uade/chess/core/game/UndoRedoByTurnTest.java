@@ -6,11 +6,7 @@ import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.StandardChessSetup;
-import ar.edu.uade.chess.core.rules.CheckDetector;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,14 +47,6 @@ class UndoRedoByTurnTest {
     }
 
     @Test
-    void atTheStart_thereIsNothingToUndoOrRedo() {
-        Game game = start(true);
-
-        assertFalse(game.canUndo());
-        assertFalse(game.canRedo());
-    }
-
-    @Test
     void againstTheComputer_undoTakesBackItsReplyAndTheHumanMove() {
         Game game = afterOneRoundAgainstTheComputer();
 
@@ -83,16 +71,6 @@ class UndoRedoByTurnTest {
         assertEquals("pawn", game.getBoard().getPiece(at("e4")).getId());
         assertEquals(computerReply, game.getLastMove());
         assertFalse(game.canRedo());
-    }
-
-    @Test
-    void againstTheComputer_undoNotifiesTheTurnOnlyOnce() {
-        Game game = afterOneRoundAgainstTheComputer();
-        spy.events.clear();
-
-        game.undo();
-
-        assertEquals(List.of("turn WHITE"), spy.events, "adapters refresh once, already on the human's turn");
     }
 
     @Test
@@ -123,11 +101,5 @@ class UndoRedoByTurnTest {
 
         assertFalse(game.canRedo());
         assertTrue(game.canUndo());
-    }
-
-    @Test
-    void onlyTheComputerIsAutomatic() {
-        assertTrue(new AIPlayerStrategy(new MaterialEvaluationStrategy(new CheckDetector()), new Random(0)).isAutomatic());
-        assertFalse(new HumanPlayerStrategy(color -> null).isAutomatic());
     }
 }

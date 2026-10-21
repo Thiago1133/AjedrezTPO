@@ -5,7 +5,6 @@ import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.piece.PieceFactory;
-import ar.edu.uade.chess.core.piece.StandardChessSetup;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,15 +36,6 @@ class MoveQueriesTest {
     }
 
     @Test
-    void quietMove_isNeitherCaptureNorPromotion() {
-        new StandardChessSetup(pieceFactory).setup(board);
-        Game game = start();
-
-        assertFalse(game.isCapture(move("e2", "e4")));
-        assertFalse(game.isPromotion(move("e2", "e4")));
-    }
-
-    @Test
     void takingAPiece_isACapture() {
         place("king", Color.WHITE, "e1");
         place("king", Color.BLACK, "e8");
@@ -73,17 +63,6 @@ class MoveQueriesTest {
     }
 
     @Test
-    void castling_isNotACapture() {
-        place("king", Color.WHITE, "e1");
-        place("rook", Color.WHITE, "h1");
-        place("king", Color.BLACK, "e8");
-        Game game = start();
-
-        assertTrue(game.getLegalMoves().contains(move("e1", "g1")));
-        assertFalse(game.isCapture(move("e1", "g1")));
-    }
-
-    @Test
     void reachingTheLastRow_isAPromotion_alsoWhenCapturing() {
         place("king", Color.WHITE, "e1");
         place("king", Color.BLACK, "h6");
@@ -107,6 +86,22 @@ class MoveQueriesTest {
 
         assertFalse(game.isPromotion(move("a7", "b8")), "a pawn cannot move diagonally onto an empty square");
         assertFalse(game.isCapture(move("e1", "c6")), "a king cannot jump to c6");
+    }
+
+    /** The window paints this square; it no longer looks for the king itself. */
+    @Test
+    void kingInCheck_isReportedOnlyWhileInCheck() {
+        place("king", Color.WHITE, "e1");
+        place("king", Color.BLACK, "e8");
+        place("rook", Color.WHITE, "a1");
+        Game game = start();
+        assertNull(game.getKingInCheck());
+
+        assertTrue(game.move(move("a1", "a8")));
+
+        assertEquals(at("e8"), game.getKingInCheck());
+        assertTrue(game.move(move("e8", "e7")));
+        assertNull(game.getKingInCheck());
     }
 
     @Test

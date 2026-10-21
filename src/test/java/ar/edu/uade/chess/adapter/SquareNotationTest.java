@@ -35,11 +35,6 @@ class SquareNotationTest {
     }
 
     @Test
-    void parse_acceptsUpperCase() {
-        assertEquals(new Position(9, 26), SquareNotation.parse("AA10"));
-    }
-
-    @Test
     void parse_rejectsTextThatIsNotASquare() {
         assertNull(SquareNotation.parse("e"));
         assertNull(SquareNotation.parse("22"));

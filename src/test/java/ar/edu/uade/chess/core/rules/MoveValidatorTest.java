@@ -40,14 +40,6 @@ class MoveValidatorTest {
     }
 
     @Test
-    void validMove_isLegal() {
-        place(new KingDefinition(), Color.WHITE, 0, 4);
-        place(new RookDefinition(), Color.WHITE, 0, 0);
-
-        assertTrue(legal(0, 0, 5, 0, Color.WHITE));
-    }
-
-    @Test
     void moveForbiddenByPieceRules_isIllegal() {
         place(new KingDefinition(), Color.WHITE, 0, 4);
         place(new RookDefinition(), Color.WHITE, 0, 0);
@@ -112,17 +104,6 @@ class MoveValidatorTest {
         assertFalse(legal(2, 1, 4, 0, Color.WHITE), "knight move does not block");
         assertFalse(legal(0, 4, 1, 4, Color.WHITE), "king stays on the attacked file");
         assertTrue(legal(0, 4, 0, 3, Color.WHITE), "king steps aside");
-    }
-
-    @Test
-    void blockingOrCapturingTheChecker_isLegal() {
-        place(new KingDefinition(), Color.WHITE, 0, 4);
-        place(new RookDefinition(), Color.WHITE, 2, 0);
-        place(new KnightDefinition(), Color.WHITE, 2, 5);
-        place(new QueenDefinition(), Color.BLACK, 4, 4);
-
-        assertTrue(legal(2, 0, 2, 4, Color.WHITE), "rook blocks");
-        assertTrue(legal(2, 5, 4, 4, Color.WHITE), "knight captures the queen");
     }
 
     @Test

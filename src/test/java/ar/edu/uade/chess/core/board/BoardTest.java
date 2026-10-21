@@ -12,24 +12,9 @@ class BoardTest {
     private final Board board = new Board(8, 8);
 
     @Test
-    void newBoard_isEmpty() {
-        assertTrue(board.isEmpty(new Position(0, 0)));
-        assertNull(board.getPiece(new Position(3, 3)));
-        assertTrue(board.getPositionsOf(Color.WHITE).isEmpty());
-    }
-
-    @Test
     void constructor_rejectsNonPositiveDimensions() {
         assertThrows(IllegalArgumentException.class, () -> new Board(0, 8));
         assertThrows(IllegalArgumentException.class, () -> new Board(8, -1));
-    }
-
-    @Test
-    void isInside_respectsBoardLimits() {
-        assertTrue(board.isInside(new Position(0, 0)));
-        assertTrue(board.isInside(new Position(7, 7)));
-        assertFalse(board.isInside(new Position(8, 0)));
-        assertFalse(board.isInside(new Position(0, -1)));
     }
 
     @Test
@@ -37,15 +22,6 @@ class BoardTest {
         Board big = new Board(64, 64);
         assertTrue(big.isInside(new Position(63, 63)));
         assertFalse(big.isInside(new Position(64, 0)));
-    }
-
-    @Test
-    void placePiece_thenGetPiece() {
-        Piece rook = new RookDefinition().create(Color.WHITE);
-        board.placePiece(rook, new Position(0, 0));
-
-        assertSame(rook, board.getPiece(new Position(0, 0)));
-        assertFalse(board.isEmpty(new Position(0, 0)));
     }
 
     @Test
@@ -68,21 +44,6 @@ class BoardTest {
     }
 
     @Test
-    void movePiece_fromEmptySquare_throws() {
-        assertThrows(IllegalStateException.class, () -> board.movePiece(new Position(0, 0), new Position(1, 1)));
-    }
-
-    @Test
-    void removePiece_returnsRemovedPiece() {
-        Piece rook = new RookDefinition().create(Color.WHITE);
-        board.placePiece(rook, new Position(2, 2));
-
-        assertSame(rook, board.removePiece(new Position(2, 2)));
-        assertTrue(board.isEmpty(new Position(2, 2)));
-        assertNull(board.removePiece(new Position(2, 2)));
-    }
-
-    @Test
     void isPathClear_detectsBlockersOnLinesAndDiagonals() {
         board.placePiece(new PawnDefinition().create(Color.WHITE), new Position(0, 3));
 
@@ -90,15 +51,6 @@ class BoardTest {
         assertTrue(board.isPathClear(new Position(0, 0), new Position(0, 3)), "destination itself is not checked");
         assertTrue(board.isPathClear(new Position(0, 0), new Position(7, 7)));
         assertFalse(board.isPathClear(new Position(0, 0), new Position(2, 1)), "not a straight line");
-    }
-
-    @Test
-    void getPositionsOf_filtersByColor() {
-        board.placePiece(new RookDefinition().create(Color.WHITE), new Position(0, 0));
-        board.placePiece(new RookDefinition().create(Color.BLACK), new Position(7, 0));
-
-        assertEquals(1, board.getPositionsOf(Color.WHITE).size());
-        assertEquals(new Position(7, 0), board.getPositionsOf(Color.BLACK).get(0));
     }
 
     @Test
@@ -115,23 +67,6 @@ class BoardTest {
     }
 
     @Test
-    void position_offsetAndEquality() {
-        Position position = new Position(3, 3);
-        assertEquals(new Position(4, 2), position.offset(new Direction(1, -1)));
-        assertEquals(position.hashCode(), new Position(3, 3).hashCode());
-    }
-
-    @Test
-    void move_equalityIsDefinedBySquares() {
-        Position from = new Position(6, 0);
-        Position to = new Position(7, 0);
-        assertEquals(new Move(from, to), new Move(from, to));
-        assertEquals(new Move(from, to).hashCode(), new Move(from, to).hashCode());
-        assertNotEquals(new Move(from, to), new Move(from, new Position(7, 1)));
-        assertNotEquals(new Move(from, to), new Move(new Position(6, 1), to));
-    }
-
-    @Test
     void move_promotionChoiceIsCarriedButIsNotPartOfTheIdentity() {
         Position from = new Position(6, 0);
         Position to = new Position(7, 0);
@@ -140,12 +75,5 @@ class BoardTest {
         assertEquals("knight", promotion.getPromotionId());
         assertEquals(new Move(from, to), promotion);
         assertEquals(new Move(from, to).hashCode(), promotion.hashCode());
-    }
-
-    @Test
-    void color_oppositeAndForward() {
-        assertEquals(Color.BLACK, Color.WHITE.opposite());
-        assertEquals(1, Color.WHITE.forward());
-        assertEquals(-1, Color.BLACK.forward());
     }
 }

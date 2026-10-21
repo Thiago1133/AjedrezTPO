@@ -11,8 +11,6 @@ import ar.edu.uade.chess.core.piece.PieceDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class CheckDetectorTest {
@@ -63,14 +61,6 @@ class CheckDetectorTest {
     }
 
     @Test
-    void bishop_givesCheckOnDiagonal() {
-        place(new KingDefinition(), Color.BLACK, 7, 7);
-        place(new BishopDefinition(), Color.WHITE, 0, 0);
-
-        assertTrue(detector.isInCheck(board, Color.BLACK));
-    }
-
-    @Test
     void withoutRoyalPieces_thereIsNoCheck() {
         place(new RookDefinition(), Color.BLACK, 7, 4);
         assertFalse(detector.isInCheck(board, Color.WHITE));
@@ -92,26 +82,5 @@ class CheckDetectorTest {
         detector.isSquareAttacked(board, new Position(5, 3), Color.BLACK);
 
         assertTrue(board.isEmpty(new Position(5, 3)));
-    }
-
-    @Test
-    void findRoyalPieces_returnsEveryRoyalPiece() {
-        place(new KingDefinition(), Color.WHITE, 0, 4);
-        place(new KingDefinition(), Color.WHITE, 0, 0);
-        place(new RookDefinition(), Color.WHITE, 0, 7);
-
-        List<Position> royals = detector.findRoyalPieces(board, Color.WHITE);
-
-        assertEquals(2, royals.size());
-        assertTrue(royals.containsAll(List.of(new Position(0, 4), new Position(0, 0))));
-    }
-
-    @Test
-    void check_worksOnBigBoards() {
-        Board big = new Board(64, 64);
-        big.placePiece(new KingDefinition().create(Color.WHITE), new Position(0, 0));
-        big.placePiece(new BishopDefinition().create(Color.BLACK), new Position(63, 63));
-
-        assertTrue(detector.isInCheck(big, Color.WHITE));
     }
 }

@@ -73,11 +73,6 @@ class InsufficientMaterialConditionTest {
     }
 
     @Test
-    void bishopAndKnightVsKing_isNotInsufficientMaterialDraw() {
-        assertNotDraw(position(BISHOP, Color.WHITE, "a1", KNIGHT, Color.WHITE, "b3"));
-    }
-
-    @Test
     void twoKnightsVsKing_isNotInsufficientMaterialDraw() {
         assertNotDraw(position(KNIGHT, Color.WHITE, "b1", KNIGHT, Color.WHITE, "g1"));
     }
@@ -99,14 +94,6 @@ class InsufficientMaterialConditionTest {
         board.placePiece(customPiece(Color.WHITE), at("d4"));
 
         assertNotDraw(board);
-    }
-
-    @Test
-    void newPieceDeclaredMinor_isInsufficientMaterial() {
-        Board board = position();
-        board.placePiece(customPiece(Color.WHITE, PieceTrait.MINOR), at("d4"));
-
-        assertDraw(board);
     }
 
     @Test

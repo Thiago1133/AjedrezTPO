@@ -7,13 +7,16 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
+import javax.swing.JList;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -25,6 +28,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -44,6 +48,10 @@ final class NewGameDialog extends JDialog {
     private final List<JPanel> themeCards = new ArrayList<>();
     private final JToggleButton twoPlayers = new JToggleButton("Dos jugadores");
     private final JToggleButton versusComputer = new JToggleButton("Contra la computadora");
+    /** Screen names of the time controls; the core only knows their seconds. */
+    private static final Map<TimeControl, String> TIME_NAMES = Map.of(
+            TimeControl.THIRTY_MINUTES, "30 minutos", TimeControl.TEN_MINUTES, "10 minutos",
+            TimeControl.FIVE_MINUTES, "5 minutos", TimeControl.UNLIMITED, "Ilimitado");
     private final JComboBox<TimeControl> timeControl = new JComboBox<>(TimeControl.values());
     private PieceStyle style;
     private BoardTheme theme;
@@ -57,6 +65,15 @@ final class NewGameDialog extends JDialog {
         twoPlayers.setSelected(!initial.versusComputer());
         versusComputer.setSelected(initial.versusComputer());
         timeControl.setSelectedItem(initial.timeControl());
+        timeControl.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? " " : TIME_NAMES.getOrDefault(value, " "));
+                return this;
+            }
+        });
         buildLayout();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();

@@ -28,30 +28,20 @@ public class Game implements ChessGame {
     private final GameStatusEvaluator statusEvaluator;
     private final MoveCommandFactory commandFactory;
     private final MoveHistory history;
-    private final TimeControl timeControl;
+    private final ChessClock clock;
     private final List<GameObserver> observers = new ArrayList<>();
     private GameStatus status = GameStatus.IN_PROGRESS;
-    private int whiteRemainingSeconds;
-    private int blackRemainingSeconds;
-    private boolean clockStarted;
-
-    public Game(Board board, TurnManager turnManager, MoveValidator moveValidator,
-                GameStatusEvaluator statusEvaluator, MoveCommandFactory commandFactory, MoveHistory history) {
-        this(board, turnManager, moveValidator, statusEvaluator, commandFactory, history, TimeControl.UNLIMITED);
-    }
 
     public Game(Board board, TurnManager turnManager, MoveValidator moveValidator,
                 GameStatusEvaluator statusEvaluator, MoveCommandFactory commandFactory, MoveHistory history,
-                TimeControl timeControl) {
+                ChessClock clock) {
         this.board = board;
         this.turnManager = turnManager;
         this.moveValidator = moveValidator;
         this.statusEvaluator = statusEvaluator;
         this.commandFactory = commandFactory;
         this.history = history;
-        this.timeControl = timeControl;
-        this.whiteRemainingSeconds = timeControl.getInitialSeconds();
-        this.blackRemainingSeconds = timeControl.getInitialSeconds();
+        this.clock = clock;
     }
 
     @Override
@@ -78,9 +68,7 @@ public class Game implements ChessGame {
         MoveCommand command = commandFactory.create(board, move, history);
         command.execute(board);
         history.push(command);
-        if (!clockStarted && !timeControl.isUnlimited() && color == Color.WHITE) {
-            clockStarted = true;
-        }
+        clock.moveMade(color);
         turnManager.next();
         notifyMove(move);
         updateStatus();
@@ -90,16 +78,9 @@ public class Game implements ChessGame {
 
     @Override
     public void advanceClock(int seconds) {
-        if (seconds <= 0 || !clockStarted || timeControl.isUnlimited() || status.isGameOver()) {
-            return;
-        }
-        Color active = turnManager.getCurrentColor();
-        if (active == Color.WHITE) {
-            whiteRemainingSeconds = Math.max(0, whiteRemainingSeconds - seconds);
-            if (whiteRemainingSeconds == 0) finishOnTime(Color.WHITE);
-        } else {
-            blackRemainingSeconds = Math.max(0, blackRemainingSeconds - seconds);
-            if (blackRemainingSeconds == 0) finishOnTime(Color.BLACK);
+        Color toMove = turnManager.getCurrentColor();
+        if (!status.isGameOver() && clock.tick(toMove, seconds)) {
+            finishOnTime(toMove);
         }
     }
 
@@ -111,11 +92,12 @@ public class Game implements ChessGame {
     /**
      * Takes back the last move, and keeps going while the player to move is automatic:
      * against the computer one undo takes back its reply and the human's move, so the
-     * human is to move again. Between two humans it takes back exactly one move.
+     * human is to move again. Between two humans it takes back exactly one move. A loss on
+     * time is definitive, so then it does nothing.
      */
     @Override
     public void undo() {
-        if (!undoOneMove()) {
+        if (status.isDefinitive() || !undoOneMove()) {
             return;
         }
         while (turnManager.getCurrentPlayer().isAutomatic() && history.canUndo()) {
@@ -138,7 +120,7 @@ public class Game implements ChessGame {
     /** Replays what undo took back, again until a human is to move. */
     @Override
     public void redo() {
-        if (!redoOneMove()) {
+        if (status.isDefinitive() || !redoOneMove()) {
             return;
         }
         while (turnManager.getCurrentPlayer().isAutomatic() && history.canRedo()) {
@@ -161,12 +143,12 @@ public class Game implements ChessGame {
 
     @Override
     public boolean canUndo() {
-        return history.canUndo();
+        return !status.isDefinitive() && history.canUndo();
     }
 
     @Override
     public boolean canRedo() {
-        return history.canRedo();
+        return !status.isDefinitive() && history.canRedo();
     }
 
     @Override
@@ -246,13 +228,26 @@ public class Game implements ChessGame {
     }
 
     @Override
+    public Position getKingInCheck() {
+        if (status != GameStatus.CHECK && status != GameStatus.CHECKMATE) {
+            return null;
+        }
+        for (Position position : board.getPositionsOf(turnManager.getCurrentColor())) {
+            if (board.getPiece(position).hasTrait(PieceTrait.ROYAL)) {
+                return position;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public TimeControl getTimeControl() {
-        return timeControl;
+        return clock.getTimeControl();
     }
 
     @Override
     public int getRemainingTime(Color color) {
-        return color == Color.WHITE ? whiteRemainingSeconds : blackRemainingSeconds;
+        return clock.getRemainingSeconds(color);
     }
 
     @Override

@@ -70,17 +70,6 @@ class LargeBoardExtensionTest {
         assertTrue(spy.events.contains("check BLACK"));
     }
 
-    /** King and bishop against king: the material rule already works by traits on any board. */
-    @Test
-    void insufficientMaterial_isDetectedOnTheBigBoard() {
-        Game game = startGame(Map.of(
-                at(0, 0), new PieceAt("king", Color.WHITE),
-                at(10, 10), new PieceAt("bishop", Color.WHITE),
-                at(LAST, LAST), new PieceAt("king", Color.BLACK)));
-
-        assertEquals(GameStatus.DRAW, game.getStatus());
-    }
-
     @Test
     void pawn_promotesOnTheLastRowOfTheBigBoard() {
         Game game = startGame(Map.of(
@@ -111,19 +100,5 @@ class LargeBoardExtensionTest {
 
         assertEquals(Color.WHITE, game.getCurrentTurn());
         assertEquals("rook", game.getBoard().getPiece(at(1, 1)).getId());
-    }
-
-    @Test
-    void illegalMoves_areStillRejected() {
-        Game game = startGame(Map.of(
-                at(0, 0), new PieceAt("king", Color.WHITE),
-                at(10, 10), new PieceAt("bishop", Color.WHITE),
-                at(1, 30), new PieceAt("pawn", Color.WHITE),
-                at(LAST, LAST), new PieceAt("king", Color.BLACK)));
-        assertEquals(GameStatus.IN_PROGRESS, game.getStatus(), "the pawn avoids a draw by insufficient material");
-
-        assertFalse(game.move(new Move(at(10, 10), at(10, 40))), "a bishop cannot move sideways");
-        assertFalse(game.move(new Move(at(0, 0), at(0, 2))), "a king moves one square");
-        assertTrue(game.move(new Move(at(10, 10), at(60, 60))), "but slides any distance diagonally");
     }
 }

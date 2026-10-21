@@ -15,6 +15,7 @@ import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.command.MoveCommandFactory;
 import ar.edu.uade.chess.core.command.MoveHistory;
 import ar.edu.uade.chess.core.game.AIPlayerStrategy;
+import ar.edu.uade.chess.core.game.ChessClock;
 import ar.edu.uade.chess.core.game.Game;
 import ar.edu.uade.chess.core.game.HumanPlayerStrategy;
 import ar.edu.uade.chess.core.game.MaterialEvaluationStrategy;
@@ -106,8 +107,9 @@ public class Main {
                 new Player(Color.WHITE, new HumanPlayerStrategy(humanInput)),
                 new Player(Color.BLACK, blackStrategy));
 
-        return new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory(),
-                versusComputer ? TimeControl.UNLIMITED : timeControl);
+        // Against the computer there is no clock: the time limit only applies between two humans.
+        ChessClock clock = new ChessClock(versusComputer ? TimeControl.UNLIMITED : timeControl);
+        return new Game(board, turnManager, moveValidator, statusEvaluator, commandFactory, new MoveHistory(), clock);
     }
 
     /** Pieces shown in the new-game dialog to preview each piece style and board theme. */

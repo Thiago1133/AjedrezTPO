@@ -1,18 +1,16 @@
 package ar.edu.uade.chess.core.game;
 
-/** Available starting times for a game. */
+/** Available starting times for a game. How each one is named on screen is up to the adapters. */
 public enum TimeControl {
-    THIRTY_MINUTES(30 * 60, "30 minutos"),
-    TEN_MINUTES(10 * 60, "10 minutos"),
-    FIVE_MINUTES(5 * 60, "5 minutos"),
-    UNLIMITED(-1, "Ilimitado");
+    THIRTY_MINUTES(30 * 60),
+    TEN_MINUTES(10 * 60),
+    FIVE_MINUTES(5 * 60),
+    UNLIMITED(-1);
 
     private final int initialSeconds;
-    private final String displayName;
 
-    TimeControl(int initialSeconds, String displayName) {
+    TimeControl(int initialSeconds) {
         this.initialSeconds = initialSeconds;
-        this.displayName = displayName;
     }
 
     public int getInitialSeconds() {
@@ -21,10 +19,5 @@ public enum TimeControl {
 
     public boolean isUnlimited() {
         return this == UNLIMITED;
-    }
-
-    @Override
-    public String toString() {
-        return displayName;
     }
 }

@@ -5,21 +5,31 @@ package ar.edu.uade.chess.core.game;
  * small and stable, and no phase has behavior of its own.
  */
 public enum GameStatus {
-    IN_PROGRESS(false),
-    CHECK(false),
-    CHECKMATE(true),
-    STALEMATE(true),
-    DRAW(true),
-    WHITE_TIMEOUT(true),
-    BLACK_TIMEOUT(true);
+    IN_PROGRESS(false, false),
+    CHECK(false, false),
+    CHECKMATE(true, false),
+    STALEMATE(true, false),
+    DRAW(true, false),
+    WHITE_TIMEOUT(true, true),
+    BLACK_TIMEOUT(true, true);
 
     private final boolean gameOver;
+    private final boolean definitive;
 
-    GameStatus(boolean gameOver) {
+    GameStatus(boolean gameOver, boolean definitive) {
         this.gameOver = gameOver;
+        this.definitive = definitive;
     }
 
     public boolean isGameOver() {
         return gameOver;
+    }
+
+    /**
+     * True if the result cannot be taken back: a loss on time ends the game for good, as
+     * with a real chess clock. A position-based result (checkmate, draw) can still be undone.
+     */
+    public boolean isDefinitive() {
+        return definitive;
     }
 }
