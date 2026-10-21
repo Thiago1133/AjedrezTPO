@@ -24,7 +24,6 @@ final class BoardPanel extends JPanel implements Scrollable {
     /** Preferred length of the board's longest side when it fits. */
     private static final int PREFERRED_SIDE = 640;
     private static final int STANDARD_SIZE = 8;
-    private static final java.awt.Color CHECK_COLOR = new java.awt.Color(220, 80, 80);
     /** Smallest square that can still be read and clicked. */
     private static final int MIN_CELL = 40;
     private final Consumer<Position> onClick;
@@ -159,7 +158,7 @@ final class BoardPanel extends JPanel implements Scrollable {
             java.awt.Color bg = theme.squareColor(lightSquare);
             if (pos.equals(lastFrom) || pos.equals(lastTo)) bg = theme.lastMove();
             if (pos.equals(selected)) bg = theme.selected();
-            if (pos.equals(checkedKing)) bg = CHECK_COLOR;
+            if (pos.equals(checkedKing)) bg = theme.check();
             square.setBackground(bg);
             square.setCoordinates(
                     coordinatesInside && r == rows - 1 ? SquareNotation.file(pos.getColumn()) : null,
