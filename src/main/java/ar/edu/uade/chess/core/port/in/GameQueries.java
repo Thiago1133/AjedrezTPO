@@ -25,6 +25,12 @@ public interface GameQueries {
     /** Square of the royal piece of the player to move while it is in check (or mated), else null. */
     Position getKingInCheck();
 
+    /** Squares of the pieces the side can still castle with (neither they nor its king have moved). */
+    List<Position> getCastlingPartners(Color color);
+
+    /** The square skipped by the last move if it was a pawn's double step, else null. */
+    Position getEnPassantSquare();
+
     TimeControl getTimeControl();
 
     /** Remaining seconds for a side, or a negative value when its control is unlimited. */
@@ -38,6 +44,9 @@ public interface GameQueries {
 
     /** True if the move is legal now and promotes, so the player should choose the new piece. */
     boolean isPromotion(Move move);
+
+    /** True if the move is legal now and puts the opponent in check. */
+    boolean givesCheck(Move move);
 
     /** The last move played (after undo, the one before it), or null at the start. */
     Move getLastMove();

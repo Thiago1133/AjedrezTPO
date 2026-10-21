@@ -2,18 +2,14 @@ package ar.edu.uade.chess.core.status;
 
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
-import ar.edu.uade.chess.core.board.Direction;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.command.MoveCommandFactory;
 import ar.edu.uade.chess.core.command.MoveHistory;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.piece.BishopDefinition;
-import ar.edu.uade.chess.core.piece.JumpMovement;
 import ar.edu.uade.chess.core.piece.KingDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
-import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.PieceDefinition;
-import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
 import ar.edu.uade.chess.core.rules.CheckDetector;
@@ -21,7 +17,6 @@ import ar.edu.uade.chess.core.rules.MoveValidator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

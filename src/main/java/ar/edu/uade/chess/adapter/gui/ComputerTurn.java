@@ -6,13 +6,14 @@ import javax.swing.Timer;
 import java.util.Random;
 
 /**
- * The computer's reply, played after a short "thinking" pause. The pause is presentation
+ * The computer's reply, played right after the human's move is shown. Any pause is presentation
  * only, so it lives in the window and not in the core. Everything runs on the Swing thread:
  * the computer answers in milliseconds and the game is never used from two threads.
  */
 final class ComputerTurn {
-    private static final int MIN_DELAY_MS = 2_000;
-    private static final int MAX_DELAY_MS = 3_000;
+    /** Pause before the computer moves: one second, so the human's move is seen first. */
+    private static final int MIN_DELAY_MS = 1_000;
+    private static final int MAX_DELAY_MS = 1_000;
 
     private final Random random;
     private final Runnable afterMove;

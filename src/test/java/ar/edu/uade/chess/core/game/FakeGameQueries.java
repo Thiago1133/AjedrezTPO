@@ -40,6 +40,11 @@ class FakeGameQueries implements GameQueries {
     }
 
     @Override
+    public boolean givesCheck(Move move) {
+        return false;
+    }
+
+    @Override
     public Move getLastMove() {
         return null;
     }
@@ -61,6 +66,16 @@ class FakeGameQueries implements GameQueries {
 
     @Override
     public Position getKingInCheck() {
+        return null;
+    }
+
+    @Override
+    public List<Position> getCastlingPartners(Color color) {
+        return List.of();
+    }
+
+    @Override
+    public Position getEnPassantSquare() {
         return null;
     }
 

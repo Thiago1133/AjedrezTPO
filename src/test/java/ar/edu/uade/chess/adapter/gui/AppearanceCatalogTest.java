@@ -1,29 +1,16 @@
 package ar.edu.uade.chess.adapter.gui;
 
 import ar.edu.uade.chess.core.board.Color;
-import ar.edu.uade.chess.core.board.Direction;
-import ar.edu.uade.chess.core.piece.BishopDefinition;
-import ar.edu.uade.chess.core.piece.KingDefinition;
-import ar.edu.uade.chess.core.piece.KnightDefinition;
-import ar.edu.uade.chess.core.piece.PawnDefinition;
 import ar.edu.uade.chess.core.piece.Piece;
-import ar.edu.uade.chess.core.piece.PieceDefinition;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
-import ar.edu.uade.chess.core.piece.RookDefinition;
-import ar.edu.uade.chess.core.piece.SlidingMovement;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Piece styles and board themes, tested in memory: no window or Swing component is created. */
 class AppearanceCatalogTest {
-    private static final List<PieceDefinition> STANDARD = List.of(
-            new KingDefinition(), new QueenDefinition(), new RookDefinition(),
-            new BishopDefinition(), new KnightDefinition(), new PawnDefinition());
-
     /** Solid and letter styles use the same shape for both sides, so color must tell them apart. */
     @Test
     void solidAndLetterStyles_distinguishSidesByFill() {

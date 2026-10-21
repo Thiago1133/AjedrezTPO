@@ -8,15 +8,12 @@ import ar.edu.uade.chess.core.command.MoveCommand;
 import ar.edu.uade.chess.core.command.MoveCommandFactory;
 import ar.edu.uade.chess.core.command.MoveHistory;
 import ar.edu.uade.chess.core.game.GameStatus;
-import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
 import ar.edu.uade.chess.core.piece.PawnDefinition;
 import ar.edu.uade.chess.core.piece.PieceDefinition;
-import ar.edu.uade.chess.core.piece.PieceFactory;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
 import ar.edu.uade.chess.core.piece.RookDefinition;
-import ar.edu.uade.chess.core.piece.StandardChessSetup;
 import ar.edu.uade.chess.core.rules.CheckDetector;
 import ar.edu.uade.chess.core.rules.MoveValidator;
 import org.junit.jupiter.api.Test;
@@ -52,12 +49,6 @@ class GameEndConditionTest {
         MoveCommand command = commandFactory.create(board, move, history);
         command.execute(board);
         history.push(command);
-    }
-
-    private void setUpStandard() {
-        new StandardChessSetup(new PieceFactory(List.of(
-                new PawnDefinition(), new RookDefinition(), new KnightDefinition(),
-                new BishopDefinition(), new QueenDefinition(), new KingDefinition()))).setup(board);
     }
 
     /** Kings plus one knight each: lets the knights shuffle back and forth. */

@@ -25,19 +25,28 @@ public class EnPassantRule implements SpecialMoveRule {
         if (piece == null || !piece.hasTrait(PieceTrait.EN_PASSANT) || last == null) {
             return false;
         }
-        Piece victim = board.getPiece(last.getTo());
-        boolean victimJustDoubleStepped = victim != null
-                && victim.getColor() != piece.getColor()
-                && victim.hasTrait(PieceTrait.EN_PASSANT)
-                && last.getFrom().getColumn() == last.getTo().getColumn()
-                && Math.abs(last.getTo().getRow() - last.getFrom().getRow()) == 2;
-        if (!victimJustDoubleStepped) {
+        Position skipped = skippedSquare(board, last);
+        if (skipped == null || board.getPiece(last.getTo()).getColor() == piece.getColor()) {
             return false;
         }
         boolean victimBeside = last.getTo().getRow() == move.getFrom().getRow()
                 && Math.abs(last.getTo().getColumn() - move.getFrom().getColumn()) == 1;
-        Position skipped = new Position(move.getFrom().getRow() + piece.getColor().forward(), last.getTo().getColumn());
         return victimBeside && move.getTo().equals(skipped) && board.isEmpty(skipped);
+    }
+
+    /**
+     * The square an EN_PASSANT piece skipped with the last move, if that move was its double
+     * step; null otherwise. A capture en passant lands there.
+     */
+    public static Position skippedSquare(Board board, Move last) {
+        if (last == null) {
+            return null;
+        }
+        Piece moved = board.getPiece(last.getTo());
+        int rows = last.getTo().getRow() - last.getFrom().getRow();
+        boolean doubleStep = moved != null && moved.hasTrait(PieceTrait.EN_PASSANT)
+                && last.getFrom().getColumn() == last.getTo().getColumn() && Math.abs(rows) == 2;
+        return doubleStep ? new Position(last.getFrom().getRow() + rows / 2, last.getFrom().getColumn()) : null;
     }
 
     @Override

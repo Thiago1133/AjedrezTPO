@@ -3,7 +3,6 @@ package ar.edu.uade.chess.core.rules;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Position;
-import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
 import ar.edu.uade.chess.core.piece.PawnDefinition;

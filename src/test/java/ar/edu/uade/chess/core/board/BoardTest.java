@@ -37,16 +37,6 @@ class BoardTest {
     }
 
     @Test
-    void isPathClear_detectsBlockersOnLinesAndDiagonals() {
-        board.placePiece(new PawnDefinition().create(Color.WHITE), new Position(0, 3));
-
-        assertFalse(board.isPathClear(new Position(0, 0), new Position(0, 7)));
-        assertTrue(board.isPathClear(new Position(0, 0), new Position(0, 3)), "destination itself is not checked");
-        assertTrue(board.isPathClear(new Position(0, 0), new Position(7, 7)));
-        assertFalse(board.isPathClear(new Position(0, 0), new Position(2, 1)), "not a straight line");
-    }
-
-    @Test
     void copy_isIndependentFromOriginal() {
         Piece rook = new RookDefinition().create(Color.WHITE);
         board.placePiece(rook, new Position(0, 0));

@@ -5,7 +5,11 @@ import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
 import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.piece.PieceFactory;
+import ar.edu.uade.chess.core.piece.StandardChessSetup;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -102,6 +106,47 @@ class MoveQueriesTest {
         assertEquals(at("e8"), game.getKingInCheck());
         assertTrue(game.move(move("e8", "e7")));
         assertNull(game.getKingInCheck());
+    }
+
+    @Test
+    void givesCheck_onlyForLegalMovesThatAttackTheKing() {
+        place("king", Color.WHITE, "e1");
+        place("king", Color.BLACK, "h8");
+        place("rook", Color.WHITE, "a1");
+        place("pawn", Color.BLACK, "h7");
+        Game game = start();
+
+        assertTrue(game.givesCheck(move("a1", "a8")));
+        assertFalse(game.givesCheck(move("a1", "a7")));
+        assertFalse(game.givesCheck(move("a1", "h1")), "illegal: the rook cannot pass its own king");
+    }
+
+    @Test
+    void castlingPartners_areLostWhenTheRookOrTheKingMoves() {
+        new StandardChessSetup(pieceFactory).setup(board);
+        Game game = start();
+        assertEquals(Set.of(at("a1"), at("h1")), Set.copyOf(game.getCastlingPartners(Color.WHITE)));
+
+        assertTrue(game.move(move("g1", "f3")));
+        assertTrue(game.move(move("e7", "e6")));
+        assertTrue(game.move(move("h1", "g1")));
+        assertEquals(List.of(at("a1")), game.getCastlingPartners(Color.WHITE), "the h1 rook moved");
+
+        assertTrue(game.move(move("e8", "e7")));
+        assertEquals(List.of(), game.getCastlingPartners(Color.BLACK), "the black king moved");
+    }
+
+    @Test
+    void enPassantSquare_isTheSquareSkippedByADoubleStep_onlyRightAfterIt() {
+        new StandardChessSetup(pieceFactory).setup(board);
+        Game game = start();
+        assertNull(game.getEnPassantSquare());
+
+        assertTrue(game.move(move("e2", "e4")));
+        assertEquals(at("e3"), game.getEnPassantSquare());
+
+        assertTrue(game.move(move("g8", "f6")));
+        assertNull(game.getEnPassantSquare(), "a knight move skips no square");
     }
 
     @Test

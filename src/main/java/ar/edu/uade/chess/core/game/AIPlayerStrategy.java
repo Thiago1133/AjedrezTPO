@@ -14,10 +14,10 @@ import ar.edu.uade.chess.core.port.in.GameQueries;
  * the best one, breaking ties at random (Random is injected so tests are repeatable).
  */
 public class AIPlayerStrategy implements PlayerStrategy {
-    private final MoveEvaluationStrategy evaluator;
+    private final MaterialEvaluator evaluator;
     private final Random random;
 
-    public AIPlayerStrategy(MoveEvaluationStrategy evaluator, Random random) {
+    public AIPlayerStrategy(MaterialEvaluator evaluator, Random random) {
         this.evaluator = evaluator;
         this.random = random;
     }

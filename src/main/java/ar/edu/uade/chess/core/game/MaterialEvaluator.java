@@ -14,17 +14,17 @@ import ar.edu.uade.chess.core.rules.CheckDetector;
  * value of the moved piece if it lands on an attacked square. It does not look
  * further ahead.
  */
-public class MaterialEvaluationStrategy implements MoveEvaluationStrategy {
+public class MaterialEvaluator {
     /** Approximate gain of turning a pawn into a queen. */
     private static final int PROMOTION_BONUS = 8;
 
     private final CheckDetector checkDetector;
 
-    public MaterialEvaluationStrategy(CheckDetector checkDetector) {
+    public MaterialEvaluator(CheckDetector checkDetector) {
         this.checkDetector = checkDetector;
     }
 
-    @Override
+    /** Score of a candidate move for the given side: higher is better. */
     public int evaluate(Board board, Move move, Color color) {
         Board after = board.copy();
         Piece mover = after.getPiece(move.getFrom());
