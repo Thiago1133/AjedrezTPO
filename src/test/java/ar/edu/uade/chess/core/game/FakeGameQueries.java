@@ -3,6 +3,7 @@ package ar.edu.uade.chess.core.game;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
+import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.port.in.GameQueries;
 
@@ -56,6 +57,11 @@ class FakeGameQueries implements GameQueries {
     @Override
     public Color getCurrentTurn() {
         return Color.BLACK;
+    }
+
+    @Override
+    public Position getKingInCheck() {
+        return null;
     }
 
     @Override

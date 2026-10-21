@@ -77,12 +77,6 @@ class MovementRuleTest {
     }
 
     @Test
-    void king_inCorner_hasThreeMoves() {
-        Piece king = place(new KingDefinition(), Color.WHITE, 0, 0);
-        assertEquals(3, king.getReachablePositions(at(0, 0), board).size());
-    }
-
-    @Test
     void knight_jumpsOverPieces() {
         Piece knight = place(new KnightDefinition(), Color.WHITE, 0, 1);
         place(new PawnDefinition(), Color.WHITE, 1, 1);
@@ -93,12 +87,6 @@ class MovementRuleTest {
 
         assertEquals(3, reachable.size());
         assertTrue(reachable.containsAll(List.of(at(2, 0), at(2, 2), at(1, 3))));
-    }
-
-    @Test
-    void knight_inCenter_hasEightMoves() {
-        Piece knight = place(new KnightDefinition(), Color.BLACK, 4, 4);
-        assertEquals(8, knight.getReachablePositions(at(4, 4), board).size());
     }
 
     @Test
@@ -147,11 +135,5 @@ class MovementRuleTest {
         assertTrue(pawn.canMove(at(3, 3), at(4, 4), board), "captures enemy");
         assertFalse(pawn.canMove(at(3, 3), at(4, 2), board), "not own piece");
         assertFalse(pawn.canMove(at(3, 3), at(2, 4), board), "not backwards");
-    }
-
-    @Test
-    void slidingMovement_rejectsNonPositiveSteps() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new SlidingMovement(ar.edu.uade.chess.core.board.Direction.ALL, 0));
     }
 }

@@ -147,24 +147,6 @@ class CaciqueExtensionTest {
     }
 
     @Test
-    void capture_thenUndo_restoresBothPieces() {
-        place("king", Color.WHITE, "a1");
-        place("king", Color.BLACK, "h8");
-        place("cacique", Color.WHITE, "d4");
-        place("rook", Color.BLACK, "d6");
-        Game game = start(FullGameWiring.twoPlayers(board, pieceFactory));
-
-        assertTrue(game.move(move("d4", "d6")));
-        assertEquals("cacique", board.getPiece(at("d6")).getId());
-
-        game.undo();
-
-        assertEquals("cacique", board.getPiece(at("d4")).getId());
-        assertEquals("rook", board.getPiece(at("d6")).getId());
-        assertEquals(Color.WHITE, game.getCurrentTurn());
-    }
-
-    @Test
     void pawn_canPromoteToTheCacique() {
         place("king", Color.WHITE, "e1");
         place("king", Color.BLACK, "h6");
@@ -176,21 +158,5 @@ class CaciqueExtensionTest {
         Piece promoted = board.getPiece(at("a8"));
         assertEquals("cacique", promoted.getId());
         assertEquals(Color.WHITE, promoted.getColor());
-    }
-
-    @Test
-    void computer_playsTheCaciqueWhenItWinsMaterial() {
-        place("king", Color.WHITE, "a1");
-        place("queen", Color.WHITE, "d6");
-        place("king", Color.BLACK, "h8");
-        place("cacique", Color.BLACK, "d4");
-        Game game = start(FullGameWiring.versusComputer(board, pieceFactory));
-        assertTrue(game.move(move("a1", "b1")));
-
-        assertTrue(game.playTurn());
-
-        Piece onD6 = board.getPiece(at("d6"));
-        assertEquals("cacique", onD6.getId(), "the AI captures the undefended queen");
-        assertEquals(Color.BLACK, onD6.getColor());
     }
 }

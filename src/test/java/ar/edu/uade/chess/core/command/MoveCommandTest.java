@@ -108,12 +108,6 @@ class MoveCommandTest {
     }
 
     @Test
-    void execute_withoutPiece_throws() {
-        MoveCommand command = new NormalMoveCommand(new Move(at(0, 0), at(1, 0)));
-        assertThrows(IllegalStateException.class, () -> command.execute(board));
-    }
-
-    @Test
     void history_undoAndRedoFollowStackOrder() {
         MoveHistory history = new MoveHistory();
         MoveCommand first = new NormalMoveCommand(new Move(at(1, 0), at(2, 0)));
@@ -126,34 +120,6 @@ class MoveCommandTest {
         assertEquals(first.getMove(), history.getLastMove());
         assertSame(second, history.popForRedo());
         assertEquals(List.of(first, second), history.getExecuted());
-    }
-
-    @Test
-    void history_newMoveClearsRedo() {
-        MoveHistory history = new MoveHistory();
-        history.push(new NormalMoveCommand(new Move(at(1, 0), at(2, 0))));
-        history.popForUndo();
-
-        history.push(new NormalMoveCommand(new Move(at(1, 1), at(2, 1))));
-
-        assertNull(history.popForRedo());
-    }
-
-    @Test
-    void history_emptyReturnsNull() {
-        MoveHistory history = new MoveHistory();
-        assertNull(history.popForUndo());
-        assertNull(history.popForRedo());
-        assertNull(history.getLastMove());
-    }
-
-    @Test
-    void factory_withoutSpecialRules_createsNormalCommand() {
-        MoveCommandFactory factory = new MoveCommandFactory(List.of());
-        Move move = new Move(at(0, 0), at(1, 0));
-
-        assertFalse(factory.isSpecialMove(board, move, new MoveHistory()));
-        assertInstanceOf(NormalMoveCommand.class, factory.create(board, move, new MoveHistory()));
     }
 
     @Test

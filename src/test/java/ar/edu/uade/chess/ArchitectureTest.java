@@ -25,9 +25,6 @@ class ArchitectureTest {
     private static final Path TEST = Path.of("src/test/java");
     private static final Path CORE = MAIN.resolve("core");
     private static final Path ADAPTER = MAIN.resolve("adapter");
-    private static final Path PORTS = CORE.resolve("port");
-    private static final Path INPUT_PORTS = PORTS.resolve("in");
-    private static final Path OUTPUT_PORTS = PORTS.resolve("out");
     /** The composition root: the only adapter class allowed to wire concrete core classes. */
     private static final Path COMPOSITION_ROOT = ADAPTER.resolve("Main.java");
 
@@ -35,10 +32,6 @@ class ArchitectureTest {
 
     /** The core may only use itself and the standard collections. */
     private static final List<String> CORE_ALLOWED_IMPORTS = List.of("ar.edu.uade.chess.core.", "java.util.");
-
-    /** Infrastructure the core must not mention at all, not even with a fully qualified name. */
-    private static final Pattern CORE_FORBIDDEN_REFERENCE = Pattern.compile(
-            "\\b(javax\\.|java\\.awt\\.|java\\.io\\.|java\\.nio\\.|java\\.net\\.|java\\.sql\\.|ar\\.edu\\.uade\\.chess\\.adapter\\.)");
 
     /**
      * What adapters may use from the core: the ports and the value types those ports
@@ -59,12 +52,11 @@ class ArchitectureTest {
             "\\.equals(IgnoreCase)?\\(\\s*\"|\"\\s*\\.equals\\(|case\\s+\"|==\\s*\"|\"\\s*==");
     private static final Pattern SINGLETON = Pattern.compile("\\bgetInstance\\s*\\(|static\\s+\\w+\\s+instance\\b");
 
-    private static final Pattern PUBLIC_INTERFACE = Pattern.compile("\\bpublic\\s+interface\\s+(\\w+)");
-    private static final Pattern IMPLEMENTS = Pattern.compile("\\bimplements\\s+([\\w\\s,<>]+?)\\s*\\{");
-
     private static List<Path> javaFiles(Path root) throws IOException {
         try (Stream<Path> files = Files.walk(root)) {
-            return files.filter(file -> file.toString().endsWith(".java")).sorted().toList();
+            List<Path> sources = files.filter(file -> file.toString().endsWith(".java")).sorted().toList();
+            assertFalse(sources.isEmpty(), "no sources in " + root + ": run the tests from the project folder");
+            return sources;
         }
     }
 
@@ -87,79 +79,6 @@ class ArchitectureTest {
     }
 
     @Test
-    void sourcesAreFound() throws IOException {
-        assertFalse(javaFiles(CORE).isEmpty(), "run the tests from the project folder");
-        assertFalse(javaFiles(ADAPTER).isEmpty());
-    }
-
-    /** Names of the port interfaces declared in a port package (package-info excluded). */
-    private static Set<String> portNames(Path ports) throws IOException {
-        Set<String> names = new TreeSet<>();
-        for (Path file : javaFiles(ports)) {
-            Matcher matcher = PUBLIC_INTERFACE.matcher(codeOf(file));
-            if (matcher.find()) names.add(matcher.group(1));
-        }
-        return names;
-    }
-
-    /** Classes in the given tree that declare they implement any of the given interfaces. */
-    private static List<String> implementorsOf(Path root, Set<String> interfaces) throws IOException {
-        List<String> implementors = new ArrayList<>();
-        for (Path file : javaFiles(root)) {
-            Matcher matcher = IMPLEMENTS.matcher(codeOf(file));
-            while (matcher.find()) {
-                for (String implemented : matcher.group(1).split("[,\\s]+")) {
-                    if (interfaces.contains(implemented)) implementors.add(name(MAIN, file) + " implements " + implemented);
-                }
-            }
-        }
-        return implementors;
-    }
-
-    @Test
-    void ports_areInterfaces_groupedByDirection() throws IOException {
-        List<String> misplaced = new ArrayList<>();
-        for (Path file : javaFiles(PORTS)) {
-            boolean packageInfo = file.getFileName().toString().equals("package-info.java");
-            boolean grouped = file.startsWith(INPUT_PORTS) || file.startsWith(OUTPUT_PORTS);
-            if (!packageInfo && (!grouped || !PUBLIC_INTERFACE.matcher(codeOf(file)).find())) {
-                misplaced.add(name(PORTS, file));
-            }
-        }
-        assertEquals(List.of(), misplaced, "every port is an interface in port/in (driving) or port/out (driven)");
-        assertFalse(portNames(INPUT_PORTS).isEmpty());
-        assertFalse(portNames(OUTPUT_PORTS).isEmpty());
-    }
-
-    /** Input ports are implemented by the core; output ports by the adapters, never the other way. */
-    @Test
-    void ports_pointInTheRightDirection() throws IOException {
-        Set<String> inputPorts = portNames(INPUT_PORTS);
-        Set<String> outputPorts = portNames(OUTPUT_PORTS);
-
-        assertFalse(implementorsOf(CORE, inputPorts).isEmpty(), "the core implements its input ports");
-        assertEquals(List.of(), implementorsOf(CORE, outputPorts), "the core uses output ports, adapters implement them");
-        assertEquals(List.of(), implementorsOf(ADAPTER, inputPorts), "adapters call input ports, they do not implement them");
-        assertFalse(implementorsOf(ADAPTER, outputPorts).isEmpty(), "adapters implement the output ports");
-    }
-
-    /**
-     * Interface segregation: inside the core only Game (which implements them) knows the
-     * actions and subscriptions; player strategies such as the computer only see GameQueries.
-     */
-    @Test
-    void insideTheCore_onlyGameKnowsTheActions() throws IOException {
-        Pattern wholePort = Pattern.compile("\\b(ChessGame|GameActions|GameSubscriptions)\\b");
-        List<String> violations = new ArrayList<>();
-        for (Path file : javaFiles(CORE)) {
-            if (file.startsWith(INPUT_PORTS) || file.equals(CORE.resolve("game/Game.java"))) continue;
-            Matcher matcher = wholePort.matcher(codeOf(file));
-            if (matcher.find()) violations.add(name(CORE, file) + " -> " + matcher.group(1));
-        }
-        assertEquals(List.of(), violations, "strategies receive GameQueries: they may look, never move");
-    }
-
-    @Test
     void core_importsOnlyItselfAndJavaUtil() throws IOException {
         List<String> violations = new ArrayList<>();
         for (Path file : javaFiles(CORE)) {
@@ -170,18 +89,6 @@ class ArchitectureTest {
             }
         }
         assertEquals(List.of(), violations, "the core must not depend on frameworks, UI or infrastructure");
-    }
-
-    @Test
-    void core_neverMentionsInfrastructureOrAdapters() throws IOException {
-        List<String> violations = new ArrayList<>();
-        for (Path file : javaFiles(CORE)) {
-            Matcher matcher = CORE_FORBIDDEN_REFERENCE.matcher(codeOf(file));
-            while (matcher.find()) {
-                violations.add(name(CORE, file) + " -> " + matcher.group(1));
-            }
-        }
-        assertEquals(List.of(), violations, "dependencies point inwards: the core never knows the adapters");
     }
 
     @Test

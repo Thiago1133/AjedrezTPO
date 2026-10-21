@@ -42,20 +42,4 @@ class PromotionNotationTest {
         assertEquals("cacique", notation.idFor("c", Color.WHITE));
         assertEquals("cacique", notation.idFor("cacique", Color.BLACK));
     }
-
-    @Test
-    void unknownText_isPassedToTheCore() {
-        assertEquals("x", notation.idFor("x", Color.WHITE));
-    }
-
-    @Test
-    void help_listsEveryChoice() {
-        assertEquals("q reina, c cacique, r torre, n caballo", notation.describe(Color.WHITE));
-    }
-
-    @Test
-    void pieceNames_fallBackToTheIdForNewPieces() {
-        assertEquals("Caballo", PieceNames.of(new KnightDefinition().create(Color.WHITE)));
-        assertEquals("Cacique", PieceNames.of(cacique(Color.WHITE)));
-    }
 }

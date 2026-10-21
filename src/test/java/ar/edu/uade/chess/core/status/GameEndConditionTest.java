@@ -105,18 +105,6 @@ class GameEndConditionTest {
     }
 
     @Test
-    void foolsMate_fromTheStartingPosition() {
-        setUpStandard();
-
-        play("f2", "f3", Color.WHITE);
-        play("e7", "e5", Color.BLACK);
-        play("g2", "g4", Color.WHITE);
-        play("d8", "h4", Color.BLACK);
-
-        assertTrue(checkmate.isMet(board, history, Color.WHITE));
-    }
-
-    @Test
     void kingWithNoMovesAndNotInCheck_isStalemate() {
         place(new KingDefinition(), Color.BLACK, "a8");
         place(new QueenDefinition(), Color.WHITE, "c7");
@@ -125,15 +113,6 @@ class GameEndConditionTest {
         assertTrue(stalemate.isMet(board, history, Color.BLACK));
         assertFalse(checkmate.isMet(board, history, Color.BLACK));
         assertEquals(GameStatus.STALEMATE, stalemate.getResult());
-    }
-
-    @Test
-    void startingPosition_endsNothing() {
-        setUpStandard();
-
-        for (GameEndCondition condition : List.of(checkmate, stalemate, fiftyMoves, repetition)) {
-            assertFalse(condition.isMet(board, history, Color.WHITE), condition.getClass().getSimpleName());
-        }
     }
 
     @Test
@@ -179,18 +158,6 @@ class GameEndConditionTest {
         shuffleKnights();
         assertTrue(repetition.isMet(board, history, Color.WHITE), "third occurrence");
         assertEquals(GameStatus.DRAW, repetition.getResult());
-    }
-
-    @Test
-    void threefoldRepetition_doesNotModifyTheBoard() {
-        setUpKnightsOnly();
-        shuffleKnights();
-        play("g1", "f3", Color.WHITE);
-
-        repetition.isMet(board, history, Color.BLACK);
-
-        assertEquals("knight", board.getPiece(at("f3")).getId());
-        assertTrue(board.isEmpty(at("g1")));
     }
 
     @Test

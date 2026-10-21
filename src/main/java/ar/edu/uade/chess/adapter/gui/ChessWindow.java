@@ -21,7 +21,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.Timer;
 
 import ar.edu.uade.chess.adapter.PieceNames;
@@ -32,7 +31,6 @@ import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.game.TimeControl;
 import ar.edu.uade.chess.core.piece.Piece;
-import ar.edu.uade.chess.core.piece.PieceTrait;
 import ar.edu.uade.chess.core.port.in.ChessGame;
 import ar.edu.uade.chess.core.port.in.PromotionOptions;
 import ar.edu.uade.chess.core.port.out.GameObserver;
@@ -75,7 +73,6 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private Color checkedColor;
     private boolean versusComputer;
     private boolean handlingGameOver;
-    private SwingWorker<Boolean, Void> aiMoveWorker;
     private Timer aiDelayTimer;
     private boolean aiMovePending;
     private final Timer chessClock = new Timer(1000, e -> tickClock());
@@ -329,32 +326,20 @@ public final class ChessWindow extends JFrame implements GameObserver {
         delayTimer.start();
     }
 
+    /**
+     * Runs on the Swing thread, like every other call to the game: the computer answers in
+     * milliseconds, and the core is never used from two threads at once.
+     */
     private void runAiMove(ChessGame scheduledGame) {
-        aiMoveWorker = new SwingWorker<>() {
-            @Override
-            protected Boolean doInBackground() {
-                return scheduledGame.playTurn();
-            }
-
-            @Override
-            protected void done() {
-                if (aiMoveWorker != this) return;
-                aiMoveWorker = null;
-                aiMovePending = false;
-                if (game == scheduledGame) refresh();
-            }
-        };
-        aiMoveWorker.execute();
+        scheduledGame.playTurn();
+        aiMovePending = false;
+        refresh();
     }
 
     private void cancelPendingAiMove() {
         if (aiDelayTimer != null) {
             aiDelayTimer.stop();
             aiDelayTimer = null;
-        }
-        if (aiMoveWorker != null) {
-            aiMoveWorker.cancel(true);
-            aiMoveWorker = null;
         }
         aiMovePending = false;
     }
@@ -387,7 +372,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         updateClockLabels();
         undo.setEnabled(!aiMovePending && game.canUndo());
         redo.setEnabled(!aiMovePending && game.canRedo());
-        board.setKingInCheck(checkedKingPosition());
+        board.setKingInCheck(game.getKingInCheck());
         board.render(game.getBoard());
         turn.setText(game.getStatus().isGameOver() ? "—" : colorName(game.getCurrentTurn()));
         if (game.getStatus() != GameStatus.CHECK) checkedColor = null;
@@ -396,39 +381,17 @@ public final class ChessWindow extends JFrame implements GameObserver {
         board.repaint();
     }
 
-    private Position checkedKingPosition() {
-        if (game.getStatus() != GameStatus.CHECK && game.getStatus() != GameStatus.CHECKMATE) return null;
-        var currentBoard = game.getBoard();
-        for (Position position : currentBoard.getPositionsOf(game.getCurrentTurn())) {
-            Piece piece = currentBoard.getPiece(position);
-            if (piece != null && piece.hasTrait(PieceTrait.ROYAL)) return position;
-        }
-        return null;
-    }
-
     @Override public void onMoveExecuted(Move move) { }
 
-    @Override public void onTurnChanged(Color color) {
-        Runnable update = this::refresh;
-        if (SwingUtilities.isEventDispatchThread()) update.run();
-        else SwingUtilities.invokeLater(update);
-    }
+    @Override public void onTurnChanged(Color color) { refresh(); }
 
     @Override public void onCheck(Color color) {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> onCheck(color));
-            return;
-        }
         checkedColor = color;
         status.setText("Jaque a " + colorName(color).toLowerCase());
         message.setText("¡Jaque a " + colorName(color).toLowerCase() + "!");
     }
 
     @Override public void onGameOver(GameStatus result) {
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> onGameOver(result));
-            return;
-        }
         if (handlingGameOver) return;
         handlingGameOver = true;
         chessClock.stop();

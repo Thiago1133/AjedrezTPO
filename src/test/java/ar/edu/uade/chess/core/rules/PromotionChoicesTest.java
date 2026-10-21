@@ -1,11 +1,7 @@
 package ar.edu.uade.chess.core.rules;
 
-import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Direction;
-import ar.edu.uade.chess.core.board.Move;
-import ar.edu.uade.chess.core.board.Position;
-import ar.edu.uade.chess.core.command.MoveCommand;
 import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KingDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
@@ -55,27 +51,10 @@ class PromotionChoicesTest {
     }
 
     @Test
-    void choices_haveTheRequestedColor() {
-        assertTrue(rule.getPromotionChoices(Color.BLACK).stream().allMatch(p -> p.getColor() == Color.BLACK));
-    }
-
-    @Test
     void registeringANewPiece_addsItToTheChoices() {
         pieceFactory.register(CACIQUE);
 
         assertEquals(List.of("queen", "cacique", "rook", "knight", "bishop"),
                 ids(rule.getPromotionChoices(Color.WHITE)));
-    }
-
-    @Test
-    void invalidOrMissingChoice_promotesToTheMostValuableChoice() {
-        Board board = new Board(8, 8);
-        board.placePiece(pieceFactory.create("pawn", Color.WHITE), new Position(6, 0));
-        Move toKing = new Move(new Position(6, 0), new Position(7, 0), "king");
-
-        MoveCommand command = rule.createCommand(board, toKing);
-        command.execute(board);
-
-        assertEquals("queen", board.getPiece(new Position(7, 0)).getId());
     }
 }

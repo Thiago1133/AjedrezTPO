@@ -3,6 +3,7 @@ package ar.edu.uade.chess.core.port.in;
 import ar.edu.uade.chess.core.board.Board;
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Move;
+import ar.edu.uade.chess.core.board.Position;
 import ar.edu.uade.chess.core.game.GameStatus;
 import ar.edu.uade.chess.core.game.TimeControl;
 import ar.edu.uade.chess.core.piece.Piece;
@@ -20,6 +21,9 @@ public interface GameQueries {
     Color getCurrentTurn();
 
     GameStatus getStatus();
+
+    /** Square of the royal piece of the player to move while it is in check (or mated), else null. */
+    Position getKingInCheck();
 
     TimeControl getTimeControl();
 

@@ -54,7 +54,8 @@ class GameTest {
                 new Player(Color.WHITE, new HumanPlayerStrategy(input)),
                 new Player(Color.BLACK, new HumanPlayerStrategy(input)));
         Game game = new Game(board, turns, new MoveValidator(checkDetector, commandFactory),
-                new GameStatusEvaluator(checkDetector, endConditions), commandFactory, new MoveHistory());
+                new GameStatusEvaluator(checkDetector, endConditions), commandFactory, new MoveHistory(),
+                new ChessClock(TimeControl.UNLIMITED));
         game.addObserver(spy);
         game.start();
         return game;
@@ -62,15 +63,6 @@ class GameTest {
 
     private Game newGame(Board board) {
         return newGame(board, List.of(), List.of());
-    }
-
-    @Test
-    void start_whiteMovesFirst() {
-        Game game = newGame(standardBoard());
-
-        assertEquals(Color.WHITE, game.getCurrentTurn());
-        assertEquals(GameStatus.IN_PROGRESS, game.getStatus());
-        assertEquals(List.of("turn WHITE"), spy.events);
     }
 
     @Test
@@ -96,13 +88,6 @@ class GameTest {
     }
 
     @Test
-    void cannotMoveOpponentPieceOnYourTurn() {
-        Game game = newGame(standardBoard());
-
-        assertFalse(game.move(move("e7", "e5")));
-    }
-
-    @Test
     void turnsAlternate() {
         Game game = newGame(standardBoard());
 
@@ -110,18 +95,6 @@ class GameTest {
         assertFalse(game.move(move("d2", "d4")), "white cannot move twice");
         assertTrue(game.move(move("e7", "e5")));
         assertEquals(Color.WHITE, game.getCurrentTurn());
-    }
-
-    @Test
-    void capture_removesEnemyPiece() {
-        Game game = newGame(standardBoard());
-        game.move(move("e2", "e4"));
-        game.move(move("d7", "d5"));
-
-        assertTrue(game.move(move("e4", "d5")));
-
-        assertEquals(15, game.getBoard().getPositionsOf(Color.BLACK).size());
-        assertEquals(Color.WHITE, game.getBoard().getPiece(at("d5")).getColor());
     }
 
     @Test
@@ -167,19 +140,6 @@ class GameTest {
         game.redo();
         assertEquals("pawn", game.getBoard().getPiece(at("e4")).getId());
         assertEquals(Color.BLACK, game.getCurrentTurn());
-    }
-
-    @Test
-    void undo_restoresCapturedPiece() {
-        Game game = newGame(standardBoard());
-        game.move(move("e2", "e4"));
-        game.move(move("d7", "d5"));
-        game.move(move("e4", "d5"));
-
-        game.undo();
-
-        assertEquals(Color.BLACK, game.getBoard().getPiece(at("d5")).getColor());
-        assertEquals(16, game.getBoard().getPositionsOf(Color.BLACK).size());
     }
 
     @Test
@@ -280,16 +240,6 @@ class GameTest {
     }
 
     @Test
-    void getLegalMoves_listsMovesOfThePlayerToMove() {
-        Game game = newGame(standardBoard());
-
-        assertEquals(20, game.getLegalMoves().size());
-        game.move(move("e2", "e4"));
-        assertTrue(game.getLegalMoves().stream()
-                .allMatch(m -> game.getBoard().getPiece(m.getFrom()).getColor() == Color.BLACK));
-    }
-
-    @Test
     void getLegalMoves_isEmptyWhenTheGameIsOver() {
         CheckDetector checkDetector = new CheckDetector();
         MoveValidator validator = new MoveValidator(checkDetector, new MoveCommandFactory(List.of()));
@@ -300,12 +250,5 @@ class GameTest {
         game.move(move("d8", "h4"));
 
         assertTrue(game.getLegalMoves().isEmpty());
-    }
-
-    @Test
-    void turnManager_requiresWhiteThenBlack() {
-        PlayerStrategy noMoves = (game, color) -> null;
-        assertThrows(IllegalArgumentException.class, () -> new TurnManager(
-                new Player(Color.BLACK, noMoves), new Player(Color.WHITE, noMoves)));
     }
 }

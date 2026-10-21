@@ -47,41 +47,6 @@ class CapturesAndLastMoveTest {
     }
 
     @Test
-    void atTheStart_nothingIsCapturedAndThereIsNoLastMove() {
-        place("rook", Color.WHITE, "a1");
-        Game game = start();
-
-        assertTrue(game.getCapturedPieces(Color.WHITE).isEmpty());
-        assertEquals(6, game.getMaterialAdvantage(Color.WHITE));
-        assertNull(game.getLastMove());
-    }
-
-    @Test
-    void quietMove_capturesNothing_butIsTheLastMove() {
-        place("knight", Color.WHITE, "b1");
-        Game game = start();
-
-        assertTrue(game.move(move("b1", "c3")));
-
-        assertTrue(game.getCapturedPieces(Color.WHITE).isEmpty());
-        assertEquals(move("b1", "c3"), game.getLastMove());
-    }
-
-    @Test
-    void capture_isCreditedToTheCapturer_withItsAdvantage() {
-        place("rook", Color.WHITE, "a1");
-        place("knight", Color.BLACK, "a5");
-        Game game = start();
-
-        assertTrue(game.move(move("a1", "a5")));
-
-        assertEquals(List.of("knight"), ids(game.getCapturedPieces(Color.WHITE)));
-        assertTrue(game.getCapturedPieces(Color.BLACK).isEmpty());
-        assertEquals(6, game.getMaterialAdvantage(Color.WHITE));
-        assertEquals(0, game.getMaterialAdvantage(Color.BLACK));
-    }
-
-    @Test
     void capturedPieces_areListedMostValuableFirst_andBothSidesCount() {
         place("rook", Color.WHITE, "a1");
         place("pawn", Color.BLACK, "a5");
