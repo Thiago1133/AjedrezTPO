@@ -5,7 +5,7 @@ import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.command.MoveHistory;
 import ar.edu.uade.chess.core.game.GameStatus;
 
-/** A way the game can end (checkmate, stalemate, draw rules...). New ones are just injected. */
+/** A way the game can end (checkmate, stalemate, draw rules...). */
 public interface GameEndCondition {
     boolean isMet(Board board, MoveHistory history, Color toMove);
 

@@ -10,8 +10,7 @@ import java.util.List;
 
 /**
  * A move that the pieces' own movement rules do not cover (castling, en passant,
- * promotion). New special rules are added by implementing this interface and
- * injecting them; existing code does not change.
+ * promotion).
  */
 public interface SpecialMoveRule {
     boolean canApply(Board board, Move move, MoveHistory history);

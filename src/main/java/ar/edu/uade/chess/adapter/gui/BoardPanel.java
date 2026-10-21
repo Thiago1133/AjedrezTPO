@@ -17,8 +17,7 @@ import java.util.function.Consumer;
 
 /**
  * Visual board sized from the core's dimensions; it does not validate or execute chess rules.
- * Squares stay square and centered. When even the smallest usable square does not fit
- * (a 64x64 board, for example) the board keeps that size and the scroll pane scrolls it.
+ * Squares stay square and centered, and never smaller than a readable size.
  */
 final class BoardPanel extends JPanel implements Scrollable {
     /** Preferred length of the board's longest side when it fits. */
@@ -70,7 +69,6 @@ final class BoardPanel extends JPanel implements Scrollable {
 
     int getColumns() { return columns; }
 
-    /** Boards up to 8x8 show coordinates inside the squares; bigger ones use rulers beside the board. */
     boolean showsCoordinatesInside() {
         return rows <= STANDARD_SIZE && columns <= STANDARD_SIZE;
     }

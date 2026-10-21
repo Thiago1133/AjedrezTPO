@@ -4,7 +4,7 @@ import java.awt.Color;
 
 /**
  * Colors of the board squares and their highlights, including the square of a king in
- * check. A new palette is a new value in AppearanceCatalog.
+ * check.
  */
 record BoardTheme(String displayName, Color light, Color dark, Color selected, Color lastMove,
                   Color lightCoordinate, Color darkCoordinate, Color marker, Color check) {

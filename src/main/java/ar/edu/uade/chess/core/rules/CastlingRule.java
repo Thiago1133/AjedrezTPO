@@ -17,7 +17,7 @@ import java.util.List;
  * Castling: an unmoved royal piece with CASTLES moves two squares towards an
  * unmoved CASTLES partner on the same row, which jumps to the square it crossed.
  * The path must be empty, and the king may not be in check, cross an attacked
- * square or land on one. Works on any board width.
+ * square or land on one.
  */
 public class CastlingRule implements SpecialMoveRule {
     private static final int KING_STEPS = 2;

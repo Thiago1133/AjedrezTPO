@@ -12,7 +12,7 @@ import ar.edu.uade.chess.core.rules.CheckDetector;
 /**
  * One-move material evaluation: value captured, plus a promotion bonus, minus the
  * value of the moved piece if it lands on an attacked square. It does not look
- * further ahead; deeper evaluators can be plugged in instead.
+ * further ahead.
  */
 public class MaterialEvaluationStrategy implements MoveEvaluationStrategy {
     /** Approximate gain of turning a pawn into a queen. */

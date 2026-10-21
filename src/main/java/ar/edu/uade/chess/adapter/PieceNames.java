@@ -5,8 +5,7 @@ import ar.edu.uade.chess.core.piece.Piece;
 import java.util.Map;
 
 /**
- * Spanish names shown to the player. A piece without a translation (a new piece type)
- * is shown by its own id, so adding a piece never requires changing the adapters.
+ * Spanish names shown to the player.
  */
 public final class PieceNames {
     private static final Map<String, String> NAMES = Map.of(

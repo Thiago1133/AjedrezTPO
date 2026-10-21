@@ -48,8 +48,6 @@ import ar.edu.uade.chess.core.status.ThreefoldRepetitionCondition;
 /**
  * Composition root: the only place where concrete classes are instantiated and wired
  * together (dependency injection by hand), for both adapters (Swing window and console).
- * Extending the game (a new piece, rule or board size) means changing the wiring here,
- * not the core classes.
  */
 public class Main {
     private static final String CONSOLE_FLAG = "--consola";

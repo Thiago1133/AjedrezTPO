@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Same wiring as the composition root (Main), so extension tests exercise every real rule
- * and end condition. Only the board, its setup and the registered pieces vary per test.
+ * Same wiring as the composition root (Main), so these tests exercise every real rule and
+ * end condition.
  */
 final class FullGameWiring {
     private FullGameWiring() {

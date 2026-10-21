@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Driving port: which pieces a pawn may promote to, so adapters offer exactly what the
- * core accepts. A newly registered piece shows up here without changing any adapter.
+ * core accepts.
  */
 public interface PromotionOptions {
     /** One sample piece per valid choice, most valuable first. */

@@ -3,8 +3,8 @@ package ar.edu.uade.chess.adapter;
 import ar.edu.uade.chess.core.board.Position;
 
 /**
- * Square names for any board size: columns a..z, then aa, ab... (like spreadsheet
- * columns) and rows 1, 2, 3... So "e2" on 8x8 and "bl64" on 64x64 both work.
+ * Square names as players write them: a letter for the column and a number for the
+ * row, such as "e2".
  */
 public final class SquareNotation {
     private static final int LETTERS = 26;

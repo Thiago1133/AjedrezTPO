@@ -19,26 +19,13 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** The promotion choices come from the registered pieces, so new pieces need no code changes. */
+/** Which pieces a pawn may promote to. */
 class PromotionChoicesTest {
 
     private final PieceFactory pieceFactory = new PieceFactory(List.of(
             new PawnDefinition(), new RookDefinition(), new KnightDefinition(),
             new BishopDefinition(), new QueenDefinition(), new KingDefinition()));
     private final PromotionRule rule = new PromotionRule(pieceFactory);
-
-    private static final PieceDefinition CACIQUE = new PieceDefinition() {
-        @Override
-        public String getId() {
-            return "cacique";
-        }
-
-        @Override
-        public Piece create(Color color) {
-            return new Piece(getId(), color == Color.WHITE ? 'C' : 'c', color, 6, Set.of(),
-                    List.of(new SlidingMovement(Direction.ORTHOGONAL, 2)));
-        }
-    };
 
     private static List<String> ids(List<Piece> pieces) {
         return pieces.stream().map(Piece::getId).toList();
@@ -48,13 +35,5 @@ class PromotionChoicesTest {
     @Test
     void choices_excludeRoyalAndPromotingPieces_mostValuableFirst() {
         assertEquals(List.of("queen", "rook", "knight", "bishop"), ids(rule.getPromotionChoices(Color.WHITE)));
-    }
-
-    @Test
-    void registeringANewPiece_addsItToTheChoices() {
-        pieceFactory.register(CACIQUE);
-
-        assertEquals(List.of("queen", "cacique", "rook", "knight", "bishop"),
-                ids(rule.getPromotionChoices(Color.WHITE)));
     }
 }

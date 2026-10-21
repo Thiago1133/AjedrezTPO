@@ -17,7 +17,7 @@ mvn package     # compila, corre los tests y genera el jar
 ```
 
 Para correr una sola clase de tests: `mvn test -Dtest=GameTest`. En PowerShell, si hay comas,
-va entre comillas: `mvn test "-Dtest=CaciqueExtensionTest,LargeBoardExtensionTest"`.
+va entre comillas: `mvn test "-Dtest=GameTest,ClockTest"`.
 
 ## Ejecución
 
@@ -36,11 +36,10 @@ tablero (Verde, Madera, Azul, Gris). La ventana recuerda la última elección mi
 Muestra las jugadas posibles al elegir una pieza, la última jugada, el rey en jaque en rojo, las
 piezas capturadas con la ventaja de material y el reloj. Tiene deshacer, rehacer y girar el
 tablero. Contra la computadora, deshacer y rehacer devuelven el turno al jugador humano.
-Los tableros más grandes que 8x8 se muestran con barras de desplazamiento y coordenadas al costado.
 
 **Consola.** El modo se pregunta al arrancar. Comandos: `e2 e4` para mover, `e7 e8 q` para
 promover (la pieza se escribe con su letra, su nombre o su id: `q`, `reina`, `queen`), `deshacer`,
-`rehacer`, `ayuda`, `salir`. En tableros de más de 26 columnas se siguen con `aa`, `ab`... (`bl64`).
+`rehacer`, `ayuda`, `salir`.
 
 ## Alcance
 
@@ -87,16 +86,6 @@ Todos corren en memoria, sin abrir ventanas.
 
 - **Núcleo:** movimiento de cada pieza, validación (clavadas, jaque), comandos y deshacer, reglas
   especiales, fin de partida, IA, consultas de la partida, capturas y material, reloj.
-- **Extensibilidad:** `CaciqueExtensionTest` agrega una pieza nueva ("El Cacique") y
-  `LargeBoardExtensionTest` juega en un tablero de 64x64, sin modificar clases existentes.
 - **Arquitectura:** `ArchitectureTest` falla si el núcleo importa algo de afuera, si un adaptador
   usa clases internas del núcleo en lugar de los puertos, si hay comparaciones de texto en el
   código, si hay Singletons o si un test usa Swing.
-
-## Extender el juego
-
-- **Pieza nueva:** una clase que implemente `PieceDefinition` (combinando reglas de movimiento
-  existentes) y registrarla en la fábrica de piezas de `Main`. Aparece sola en el menú de
-  promoción y se dibuja con su letra.
-- **Otro tamaño de tablero:** cambiar el tamaño en `Main` y, si no son 8 columnas, una clase
-  nueva que implemente `BoardSetup` con la posición inicial.

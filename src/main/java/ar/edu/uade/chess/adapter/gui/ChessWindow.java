@@ -3,7 +3,7 @@ package ar.edu.uade.chess.adapter.gui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Rectangle;
+import java.awt.Point;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 import ar.edu.uade.chess.adapter.PieceNames;
@@ -302,10 +303,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
         refresh();
     }
 
-    /**
-     * Big boards show their coordinates in rulers beside the board and start scrolled to
-     * the white side (bottom-left); standard boards keep them inside the squares.
-     */
+    /** Coordinates go in rulers when they are not drawn inside the squares; the view starts on White's side. */
     private void showRulersIfNeeded() {
         boolean rulers = !board.showsCoordinatesInside();
         boardScroll.setColumnHeaderView(rulers ? fileRuler : null);
@@ -313,7 +311,15 @@ public final class ChessWindow extends JFrame implements GameObserver {
         if (boardScroll.getColumnHeader() != null) boardScroll.getColumnHeader().setBackground(boardScroll.getBackground());
         if (boardScroll.getRowHeader() != null) boardScroll.getRowHeader().setBackground(boardScroll.getBackground());
         boardScroll.revalidate();
-        SwingUtilities.invokeLater(() -> board.scrollRectToVisible(new Rectangle(0, board.getHeight() - 1, 1, 1)));
+        SwingUtilities.invokeLater(this::showWhiteSide);
+    }
+
+    /** Bottom of the board, horizontally centered: where White's pieces start. */
+    private void showWhiteSide() {
+        JViewport viewport = boardScroll.getViewport();
+        int x = Math.max(0, (board.getWidth() - viewport.getWidth()) / 2);
+        int y = Math.max(0, board.getHeight() - viewport.getHeight());
+        viewport.setViewPosition(new Point(x, y));
     }
 
     /** Everything shown is read from the core, so undo, redo and the computer's moves need no bookkeeping here. */
@@ -346,6 +352,9 @@ public final class ChessWindow extends JFrame implements GameObserver {
         if (handlingGameOver) return;
         handlingGameOver = true;
         clock.stop();
+        // The game can end in the middle of a click: drop the selection before the dialog shows.
+        selected = null;
+        board.setHighlights(null, Set.of(), Set.of());
         refresh();
         status.setText("Finalizada");
         message.setText(" ");

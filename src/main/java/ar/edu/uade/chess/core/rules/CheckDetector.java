@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/** Answers whether royal pieces are in check. Works for any board size and any royal piece. */
+/** Answers whether royal pieces are in check. */
 public class CheckDetector {
 
     public boolean isInCheck(Board board, Color color) {

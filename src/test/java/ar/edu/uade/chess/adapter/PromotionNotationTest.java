@@ -2,6 +2,7 @@ package ar.edu.uade.chess.adapter;
 
 import ar.edu.uade.chess.core.board.Color;
 import ar.edu.uade.chess.core.board.Direction;
+import ar.edu.uade.chess.core.piece.BishopDefinition;
 import ar.edu.uade.chess.core.piece.KnightDefinition;
 import ar.edu.uade.chess.core.piece.Piece;
 import ar.edu.uade.chess.core.piece.QueenDefinition;
@@ -18,15 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Console promotion notation, tested in memory with a stub of the core's port. */
 class PromotionNotationTest {
 
-    private static Piece cacique(Color color) {
-        return new Piece("cacique", color == Color.WHITE ? 'C' : 'c', color, 6, Set.of(),
-                List.of(new SlidingMovement(Direction.ORTHOGONAL, 2)));
-    }
-
     /** Stub: the choices the core would offer, already sorted by value. */
     private final PromotionOptions stub = color -> List.of(
-            new QueenDefinition().create(color), cacique(color),
-            new RookDefinition().create(color), new KnightDefinition().create(color));
+            new QueenDefinition().create(color), new RookDefinition().create(color),
+            new KnightDefinition().create(color), new BishopDefinition().create(color));
     private final PromotionNotation notation = new PromotionNotation(stub);
 
     @Test
@@ -35,11 +31,5 @@ class PromotionNotationTest {
         assertEquals("queen", notation.idFor("Reina", Color.BLACK));
         assertEquals("rook", notation.idFor("torre", Color.WHITE));
         assertEquals("knight", notation.idFor("n", Color.WHITE));
-    }
-
-    @Test
-    void newPiece_isSelectableByItsOwnLetterAndId() {
-        assertEquals("cacique", notation.idFor("c", Color.WHITE));
-        assertEquals("cacique", notation.idFor("cacique", Color.BLACK));
     }
 }

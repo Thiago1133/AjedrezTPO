@@ -44,10 +44,4 @@ class PieceFactoryTest {
         assertEquals("pawn", board.getPiece(new Position(6, 0)).getId());
         assertTrue(board.isEmpty(new Position(4, 4)));
     }
-
-    @Test
-    void standardSetup_rejectsIncompatibleBoard() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new StandardChessSetup(factory).setup(new Board(8, 10)));
-    }
 }

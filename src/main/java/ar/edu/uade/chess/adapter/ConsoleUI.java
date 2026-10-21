@@ -138,7 +138,7 @@ public class ConsoleUI implements MoveInput, GameObserver {
         if (!line.isEmpty()) showMessage(line.toString());
     }
 
-    /** Columns are as wide as the longest column name, so boards wider than 26 columns line up. */
+    /** Columns are as wide as the longest column name, so they always line up. */
     private void render(Board board) {
         int cellWidth = SquareNotation.file(board.getColumns() - 1).length() + 1;
         int rankWidth = SquareNotation.rank(board.getRows() - 1).length() + 2;

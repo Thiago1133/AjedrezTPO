@@ -3,8 +3,7 @@ package ar.edu.uade.chess.core.piece;
 import ar.edu.uade.chess.core.board.Color;
 
 /**
- * Recipe for one kind of piece. Adding a new piece means adding a new
- * definition and registering it in the PieceFactory; nothing else changes.
+ * Recipe for one kind of piece: its id, symbol, value, traits and movement rules.
  */
 public interface PieceDefinition {
     String getId();

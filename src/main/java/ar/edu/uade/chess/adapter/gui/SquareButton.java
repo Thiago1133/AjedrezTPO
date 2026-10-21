@@ -13,7 +13,7 @@ import java.awt.RenderingHints;
 
 /**
  * A board square that paints its piece (with the chosen style), its move marker and its
- * coordinate. Everything is sized from the square itself, so it works on any board size.
+ * coordinate. Everything is sized from the square itself.
  */
 final class SquareButton extends JButton {
     /** Where a selected piece can go: an empty square or a capture. */

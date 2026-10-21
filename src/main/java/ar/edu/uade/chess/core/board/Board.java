@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Rectangular board of any size. It only stores pieces and answers geometric
+ * Rectangular board. It only stores pieces and answers geometric
  * questions; it knows nothing about chess rules.
  */
 public class Board {

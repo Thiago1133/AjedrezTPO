@@ -13,8 +13,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 /**
- * Column or row names beside a board too big for coordinates inside its squares. It sits
- * in the scroll pane's header, so the names stay visible while the board scrolls.
+ * Column or row names beside the board. It sits in the scroll pane's header, so the
+ * names stay visible while the board scrolls.
  */
 final class CoordinateRuler extends JComponent {
     /** Which names the ruler shows: files above the board or ranks to its left. */
