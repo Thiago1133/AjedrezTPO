@@ -6,8 +6,7 @@ import ar.edu.uade.chess.core.board.Position;
 import java.util.List;
 
 /**
- * One movement capability. A piece is composed of one or more rules,
- * so new pieces are built by combining existing rules.
+ * One movement capability. A piece is composed of one or more rules.
  * Rules ignore check: that is validated elsewhere.
  */
 public interface MovementRule {

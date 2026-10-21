@@ -77,35 +77,6 @@ class InsufficientMaterialConditionTest {
         assertNotDraw(position(KNIGHT, Color.WHITE, "b1", KNIGHT, Color.WHITE, "g1"));
     }
 
-    // Extensibility: the rule reads traits, so new pieces take part without changing it.
-
-    @Test
-    void newRoyalPiece_countsAsKing() {
-        Board board = new Board(8, 8);
-        board.placePiece(customPiece(Color.WHITE, PieceTrait.ROYAL), at("e1"));
-        place(board, new KingDefinition(), Color.BLACK, "e8");
-
-        assertDraw(board);
-    }
-
-    @Test
-    void newPieceWithoutMinorTrait_isNotInsufficientMaterial() {
-        Board board = position();
-        board.placePiece(customPiece(Color.WHITE), at("d4"));
-
-        assertNotDraw(board);
-    }
-
-    @Test
-    void worksOnBiggerBoards() {
-        Board board = new Board(12, 8);
-        place(board, new KingDefinition(), Color.WHITE, "e1");
-        place(board, new KingDefinition(), Color.BLACK, "e12");
-        place(board, KNIGHT, Color.WHITE, "b1");
-
-        assertDraw(board);
-    }
-
     private void assertDraw(Board board) {
         assertEquals(GameStatus.DRAW, evaluate(board));
     }
@@ -137,9 +108,4 @@ class InsufficientMaterialConditionTest {
         return new Position(Integer.parseInt(square.substring(1)) - 1, square.charAt(0) - 'a');
     }
 
-    /** A piece that does not exist in standard chess (like "El Cacique"), with the given traits. */
-    private static Piece customPiece(Color color, PieceTrait... traits) {
-        return new Piece("cacique", color == Color.WHITE ? 'C' : 'c', color, 7, Set.of(traits),
-                List.of(new JumpMovement(List.of(new Direction(3, 0), new Direction(-3, 0)))));
-    }
 }

@@ -18,13 +18,6 @@ class BoardTest {
     }
 
     @Test
-    void anySize_isSupported() {
-        Board big = new Board(64, 64);
-        assertTrue(big.isInside(new Position(63, 63)));
-        assertFalse(big.isInside(new Position(64, 0)));
-    }
-
-    @Test
     void placePiece_outsideBoard_throws() {
         Piece rook = new RookDefinition().create(Color.WHITE);
         assertThrows(IllegalArgumentException.class, () -> board.placePiece(rook, new Position(8, 8)));

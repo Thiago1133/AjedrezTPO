@@ -2,7 +2,7 @@ package ar.edu.uade.chess.core.piece;
 
 /**
  * Rule-relevant capabilities a piece may have. Rules ask for a trait instead of
- * asking "is this a king?", so a new piece can opt into existing rules.
+ * asking "is this a king?".
  */
 public enum PieceTrait {
     /** Its capture ends the game: check and checkmate apply to it. */

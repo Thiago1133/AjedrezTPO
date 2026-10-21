@@ -5,7 +5,7 @@ import ar.edu.uade.chess.core.piece.Piece;
 
 import java.awt.Font;
 
-/** The piece's own letter (K, Q, R, B, N, P): works with any font and any piece type. */
+/** The piece's own letter (K, Q, R, B, N, P). */
 final class LetterPieceStyle implements PieceStyle {
     private static final java.awt.Color WHITE_FILL = new java.awt.Color(250, 250, 248);
     private static final java.awt.Color WHITE_OUTLINE = new java.awt.Color(40, 40, 40);

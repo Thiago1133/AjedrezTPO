@@ -14,8 +14,7 @@ import java.util.List;
 /**
  * Draw when neither side can possibly checkmate: royal pieces alone, royal pieces plus a
  * single MINOR piece, or two opposing COLOR_BOUND pieces on squares of the same color.
- * Pieces are recognised by their traits, never by name, so new pieces opt in by
- * declaring traits.
+ * Pieces are recognised by their traits, never by name.
  */
 public class InsufficientMaterialCondition implements GameEndCondition {
 

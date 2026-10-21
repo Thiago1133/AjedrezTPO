@@ -6,9 +6,8 @@ import java.awt.Color;
 import java.awt.Font;
 
 /**
- * How pieces are drawn (Strategy). A new look is a new implementation registered in
- * AppearanceCatalog; the board, the sidebar and the previews never change. Every style
- * must show pieces it does not know (new piece types) with their own symbol.
+ * How pieces are drawn (Strategy). The board, the sidebar and the previews draw every
+ * piece through the style chosen for the game.
  */
 interface PieceStyle {
     String displayName();

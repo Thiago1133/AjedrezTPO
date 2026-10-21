@@ -17,11 +17,9 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Promotion: a PROMOTES piece that reaches the last row (in its forward direction,
- * on any board size) is replaced by the chosen piece. A missing or invalid choice
- * (unknown, royal or another promoting piece) becomes the most valuable valid choice.
- * The choices are every registered piece that is neither royal nor promoting, so a new
- * piece can be promoted to as soon as it is registered in the factory.
+ * Promotion: a PROMOTES piece that reaches the last row (in its forward direction) is
+ * replaced by the chosen piece. The choices are the factory's pieces that are neither
+ * royal nor promoting; a missing or invalid choice becomes the most valuable one.
  */
 public class PromotionRule implements SpecialMoveRule, PromotionOptions {
     private final PieceFactory pieceFactory;

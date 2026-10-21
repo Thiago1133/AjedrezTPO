@@ -4,8 +4,7 @@ import java.awt.Color;
 import java.util.List;
 
 /**
- * The piece styles and board themes offered before each game. Adding a look means adding it
- * to these lists; the dialog, the board and the sidebar work with whatever is listed here.
+ * The piece styles and board themes offered before each game.
  */
 final class AppearanceCatalog {
     private static final List<PieceStyle> PIECE_STYLES = List.of(

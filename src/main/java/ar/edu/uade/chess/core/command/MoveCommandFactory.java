@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Chooses the command for a move: the first special rule that applies, or a
- * normal move otherwise. Special rules are injected, never hard-coded.
+ * normal move otherwise. The special rules are injected.
  */
 public class MoveCommandFactory {
     private final List<SpecialMoveRule> specialRules;

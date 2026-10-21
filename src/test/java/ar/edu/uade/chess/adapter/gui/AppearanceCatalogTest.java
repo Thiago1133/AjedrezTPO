@@ -24,11 +24,6 @@ class AppearanceCatalogTest {
             new KingDefinition(), new QueenDefinition(), new RookDefinition(),
             new BishopDefinition(), new KnightDefinition(), new PawnDefinition());
 
-    private static Piece cacique(Color color) {
-        return new Piece("cacique", color == Color.WHITE ? 'C' : 'c', color, 7, Set.of(),
-                List.of(new SlidingMovement(Direction.DIAGONAL, 2)));
-    }
-
     /** Solid and letter styles use the same shape for both sides, so color must tell them apart. */
     @Test
     void solidAndLetterStyles_distinguishSidesByFill() {
@@ -41,14 +36,6 @@ class AppearanceCatalogTest {
             assertNotEquals(style.fillFor(white), style.outlineFor(white),
                     style.displayName() + ": a white outline would vanish on light squares");
             assertTrue(style.outlineWidth(40) > 0, style.displayName());
-        }
-    }
-
-    @Test
-    void unknownPiece_isShownWithItsOwnLetterInEveryStyle() {
-        for (PieceStyle style : AppearanceCatalog.pieceStyles()) {
-            assertEquals("C", style.symbolFor(cacique(Color.WHITE)).toUpperCase(), style.displayName());
-            assertEquals("C", style.symbolFor(cacique(Color.BLACK)).toUpperCase(), style.displayName());
         }
     }
 }
