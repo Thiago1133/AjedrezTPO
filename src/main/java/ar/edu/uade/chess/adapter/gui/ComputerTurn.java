@@ -3,7 +3,6 @@ package ar.edu.uade.chess.adapter.gui;
 import ar.edu.uade.chess.core.port.in.ChessGame;
 
 import javax.swing.Timer;
-import java.util.Random;
 
 /**
  * The computer's reply, played right after the human's move is shown. Any pause is presentation
@@ -12,24 +11,20 @@ import java.util.Random;
  */
 final class ComputerTurn {
     /** Pause before the computer moves: one second, so the human's move is seen first. */
-    private static final int MIN_DELAY_MS = 1_000;
-    private static final int MAX_DELAY_MS = 1_000;
+    private static final int DELAY_MS = 1_000;
 
-    private final Random random;
     private final Runnable afterMove;
     private Timer pending;
 
     /** @param afterMove what the window does once the computer has moved (refresh itself). */
-    ComputerTurn(Random random, Runnable afterMove) {
-        this.random = random;
+    ComputerTurn(Runnable afterMove) {
         this.afterMove = afterMove;
     }
 
     /** Plays the game's next turn after the pause, unless it is cancelled first. */
     void schedule(ChessGame game) {
         if (isPending() || game.getStatus().isGameOver()) return;
-        int delay = MIN_DELAY_MS + random.nextInt(MAX_DELAY_MS - MIN_DELAY_MS + 1);
-        Timer timer = new Timer(delay, event -> {
+        Timer timer = new Timer(DELAY_MS, event -> {
             if (pending != event.getSource()) return; // cancelled while the event was queued
             pending = null;
             if (!game.getStatus().isGameOver()) game.playTurn();

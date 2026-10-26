@@ -99,8 +99,7 @@ src/main/java/ar/edu/uade/chess/
   core/status    Condiciones de fin de partida
   core/game      Partida, estados, turnos, jugadores, estrategias (humano, IA, motor), niveles de
                  dificultad y reloj
-  core/port/in   Puertos de entrada: GameActions, GameQueries y GameSubscriptions
-                 (ChessGame las agrupa) y PromotionOptions
+  core/port/in   Puertos de entrada: ChessGame, GameQueries y PromotionOptions
   core/port/out  Puertos de salida: GameObserver, MoveInput y ChessEngine
   adapter        Consola, opciones de partida, notación de casillas y promociones, nombres de
                  piezas y Main

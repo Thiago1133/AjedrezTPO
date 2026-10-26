@@ -7,7 +7,6 @@ import java.awt.Point;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -42,6 +41,7 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private static final int VALUE_FONT_SIZE = 18;
     private static final int SECTION_GAP = 12;
     private static final int ADVANTAGE_GAP = 7;
+    private static final java.awt.Color ADVANTAGE_COLOR = new java.awt.Color(150, 210, 130);
     private final Function<GameSettings, ChessGame> gameFactory;
     private final boolean engineAvailable;
     private final List<Piece> previewPieces;
@@ -74,15 +74,14 @@ public final class ChessWindow extends JFrame implements GameObserver {
     private final ComputerTurn computerTurn;
 
     /**
-     * @param random          decides how long the computer "thinks" (injected, as everywhere else)
      * @param engineAvailable whether the chess engine can be used; if not, a short notice is shown
      */
     public ChessWindow(Function<GameSettings, ChessGame> gameFactory, List<Piece> previewPieces,
-                       PromotionOptions promotionOptions, Random random, boolean engineAvailable) {
+                       PromotionOptions promotionOptions, boolean engineAvailable) {
         super("Ajedrez");
         this.gameFactory = gameFactory;
         this.engineAvailable = engineAvailable;
-        this.computerTurn = new ComputerTurn(random, this::refresh);
+        this.computerTurn = new ComputerTurn(this::refresh);
         this.previewPieces = List.copyOf(previewPieces);
         this.promotionOptions = promotionOptions;
         buildLayout();
@@ -131,10 +130,12 @@ public final class ChessWindow extends JFrame implements GameObserver {
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(capturedByWhite);
         addValue(sidebar, whiteAdvantage, VALUE_FONT_SIZE, ADVANTAGE_GAP);
+        whiteAdvantage.setForeground(ADVANTAGE_COLOR);
         addTitle(sidebar, "CAPTURADAS POR NEGRAS");
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(capturedByBlack);
         addValue(sidebar, blackAdvantage, VALUE_FONT_SIZE, ADVANTAGE_GAP);
+        blackAdvantage.setForeground(ADVANTAGE_COLOR);
         addTitle(sidebar, clock.blackTitle());
         addValue(sidebar, clock.blackTime(), VALUE_FONT_SIZE, SECTION_GAP);
         addInfo(sidebar, "ÚLTIMA JUGADA", lastMoveText);
@@ -404,8 +405,6 @@ public final class ChessWindow extends JFrame implements GameObserver {
         capturedByBlack.setPieces(game.getCapturedPieces(Color.BLACK), lastChoice.style(), lastChoice.theme());
         whiteAdvantage.setText(advantageText(game.getMaterialAdvantage(Color.WHITE)));
         blackAdvantage.setText(advantageText(game.getMaterialAdvantage(Color.BLACK)));
-        whiteAdvantage.setForeground(new java.awt.Color(150, 210, 130));
-        blackAdvantage.setForeground(new java.awt.Color(150, 210, 130));
     }
 
     private String advantageText(int advantage) {

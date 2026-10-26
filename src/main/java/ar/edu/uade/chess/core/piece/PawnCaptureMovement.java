@@ -11,11 +11,6 @@ import java.util.List;
 public class PawnCaptureMovement implements MovementRule {
 
     @Override
-    public boolean canMove(Piece piece, Position from, Position to, Board board) {
-        return getReachablePositions(piece, from, board).contains(to);
-    }
-
-    @Override
     public List<Position> getReachablePositions(Piece piece, Position from, Board board) {
         List<Position> result = new ArrayList<>();
         int forward = piece.getColor().forward();

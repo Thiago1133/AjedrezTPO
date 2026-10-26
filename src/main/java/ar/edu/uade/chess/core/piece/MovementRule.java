@@ -10,7 +10,5 @@ import java.util.List;
  * Rules ignore check: that is validated elsewhere.
  */
 public interface MovementRule {
-    boolean canMove(Piece piece, Position from, Position to, Board board);
-
     List<Position> getReachablePositions(Piece piece, Position from, Board board);
 }
