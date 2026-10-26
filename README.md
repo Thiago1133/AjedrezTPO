@@ -53,7 +53,7 @@ Cada dificultad combina la fuerza del motor con un criterio propio:
 |---|---|---|
 | Fácil | Captura siempre que puede; si no, juega al azar | ~430 |
 | Medio | Da jaque siempre que puede; si no, juega lo que propone Stockfish en su fuerza mínima, con un 40% de jugadas al azar | ~800 |
-| Difícil | Stockfish con su opción oficial de Elo fijada en 1500 | 1500 |
+| Difícil | Stockfish con su opción oficial de Elo fijada en 1500 | ~1500 |
 
 Stockfish no baja de 1320 de Elo, por eso Fácil y Medio se debilitan con jugadas al azar. Sus Elo
 se estimaron jugando partidas contra Stockfish fijado en 1320, así que son aproximados.
