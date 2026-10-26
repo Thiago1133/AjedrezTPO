@@ -7,7 +7,7 @@ import ar.edu.uade.chess.core.board.Position;
 import java.util.List;
 
 /** Classic starting position: back rank and pawns for each side, in the middle columns. */
-public class StandardChessSetup implements BoardSetup {
+public class StandardChessSetup {
     private static final List<String> BACK_RANK =
             List.of("rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook");
 
@@ -17,7 +17,7 @@ public class StandardChessSetup implements BoardSetup {
         this.pieceFactory = pieceFactory;
     }
 
-    @Override
+    /** Places the initial pieces. */
     public void setup(Board board) {
         if (board.getColumns() < BACK_RANK.size() || board.getRows() < 4) {
             throw new IllegalArgumentException("Standard setup needs at least 8 columns and 4 rows");
