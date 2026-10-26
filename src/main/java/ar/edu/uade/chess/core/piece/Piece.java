@@ -65,12 +65,7 @@ public class Piece {
 
     /** True if any of its movement rules allows the move (check is not considered). */
     public boolean canMove(Position from, Position to, Board board) {
-        for (MovementRule rule : movementRules) {
-            if (rule.canMove(this, from, to, board)) {
-                return true;
-            }
-        }
-        return false;
+        return getReachablePositions(from, board).contains(to);
     }
 
     public List<Position> getReachablePositions(Position from, Board board) {

@@ -24,11 +24,6 @@ public class SlidingMovement implements MovementRule {
     }
 
     @Override
-    public boolean canMove(Piece piece, Position from, Position to, Board board) {
-        return getReachablePositions(piece, from, board).contains(to);
-    }
-
-    @Override
     public List<Position> getReachablePositions(Piece piece, Position from, Board board) {
         List<Position> result = new ArrayList<>();
         for (Direction direction : directions) {

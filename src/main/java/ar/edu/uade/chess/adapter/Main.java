@@ -90,7 +90,7 @@ public class Main {
         Runnable window = () -> SwingUtilities.invokeLater(() -> {
             ChessWindow chessWindow = new ChessWindow(
                     settings -> createGame(pieceFactory, promotionRule, engine, levels, settings, color -> null),
-                    previewPieces(), promotionRule, new Random(), engine.isAvailable());
+                    previewPieces(), promotionRule, engine.isAvailable());
             if (chessWindow.hasGame()) chessWindow.setVisible(true);
         });
         // Launch flags are looked up like console commands; without a known flag the window opens.
